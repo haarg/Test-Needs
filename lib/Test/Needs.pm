@@ -4,7 +4,7 @@ use warnings;
 our $VERSION = '0.001003';
 $VERSION =~ tr/_//d;
 
-my $TEST;
+use Exporter ();
 
 BEGIN {
   *_WORK_AROUND_HINT_LEAKAGE
@@ -29,10 +29,9 @@ sub _try_require {
     return !1;
   }
   !0;
-};
+}
 
-sub import {
-  my $class = shift;
+sub _find_missing {
   my @bad = map {
     my ($module, $version) = @$_;
     if (_try_require($module)) {
@@ -45,7 +44,7 @@ sub import {
       }
     }
     else {
-      $module;
+      $version ? "$module $version" : $module;
     }
   }
   map {
@@ -57,33 +56,81 @@ sub import {
       [ $_ => undef ];
     }
   } @_;
+  @bad ? "Need " . join(', ', @bad) : undef;
+}
 
-  if (@bad) {
-    my $message = 'Need ' . join ', ', @bad;
-    if ($TEST || $INC{'Test2/API.pm'} || $INC{'Test/Builder.pm'}) {
-      $TEST ||= do { require Test::Builder; Test::Builder->new };
-    }
-    if ($TEST) {
-      if ($ENV{RELEASE_TESTING}) {
-        $TEST->ok(0, "Test::Needs modules available");
-        $TEST->diag($message);
-        $TEST->no_header(1);
-      }
-      $TEST->skip_all($message);
+sub import {
+  my $class = shift;
+  my $target = caller;
+  if (@_) {
+    local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+    needs(@_);
+  }
+  no strict 'refs';
+  *{"${target}::needs"} = \&needs;
+}
+
+sub needs {
+  my $missing = _find_missing(@_);
+  local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+  _fail_or_skip($missing)
+    if $missing;
+}
+
+sub _fail_or_skip {
+  my $message = shift;
+  if ($INC{'Test2/API.pm'} || $INC{'Test/Builder.pm'}) {
+    require Test::Builder;
+    my $tb = Test::Builder->new;
+    if ($ENV{RELEASE_TESTING}) {
+      $tb->ok(0, "Test::Needs modules available");
+      $tb->diag($message);
+      _terminate($tb);
     }
     else {
-      if ($ENV{RELEASE_TESTING}) {
-        print "1..1\n";
-        print "not ok 1 - Test::Needs modules available\n";
-        print STDERR "#   $message\n";
-        exit 1;
+      my $plan = $tb->has_plan;
+      my $tests = $tb->current_test;
+      if ($plan || $tests) {
+        my $skips
+          = $plan && $plan ne 'no_plan' ? $plan - $tests : 1;
+        $tb->skip("Test::Needs modules not available")
+          for 1 .. $skips;
+        $tb->note($message);
+        _terminate($tb);
       }
       else {
-        print "1..0 # SKIP $message\n";
-        exit 0;
+        $tb->skip_all($message);
       }
     }
   }
+  else {
+    if ($ENV{RELEASE_TESTING}) {
+      print "1..1\n";
+      print "not ok 1 - Test::Needs modules available\n";
+      print STDERR "# $message\n";
+      exit 1;
+    }
+    else {
+      print "1..0 # SKIP $message\n";
+      exit 0;
+    }
+  }
+}
+
+sub _terminate {
+  my $tb = shift;
+  if ($tb->can('parent') && $tb->parent) {
+    if ($INC{'Test2/API.pm'}) {
+      my $ctx = Test2::API::context();
+      my $hub = $ctx->hub;
+      $ctx->release;
+      $hub->terminate(0, Test2::Event::Ok->new);
+    }
+    else {
+      die bless {} => 'Test::Builder::Exception';
+    }
+  }
+  exit 0;
 }
 
 1;
