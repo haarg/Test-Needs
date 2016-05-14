@@ -165,18 +165,34 @@ Test::Needs - Skip tests when modules not available
 
 Skip test scripts if modules are not available.  The requested modules will be
 loaded, and optionally have their versions checked.  If the module is missing,
-the test script will be skipped.
+the test script will be skipped.  Modules that are found but fail to compile
+will exit with an error rather than skip.
 
 If used in a subtest, the rest of the subtest will be skipped.
 
 If the C<RELEASE_TESTING> environment variable is set, the tests will fail
-rather than skip.
+rather than skip.  Subtests will be aborted, but the test script will continue
+running after that point.
 
 =head1 EXPORTS
 
 =head2 needs
 
 Has the same interface as the when using Test::Needs in a C<use>.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Test::Requires>
+
+A similar module, with some important differences.  L<Test::Requires> will act
+as a C<use> statement (despite its name), calling the import sub.  Under
+C<RELEASE_TESTING>, it will BAIL_OUT if a module fails to load rather than
+using a normal test fail.  It also doesn't distinguish between missing modules
+and broken modules.
+
+=back
 
 =head1 AUTHOR
 
