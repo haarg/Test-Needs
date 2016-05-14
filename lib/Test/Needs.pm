@@ -146,13 +146,37 @@ Test::Needs - Skip tests when modules not available
 
 =head1 SYNOPSIS
 
-  use Test::Needs 'Foo', {
-    'Some::Module' => '1.005',
+  use Test::Needs 'Some::Module';
+
+  use Test::Needs {
+    'Some::Module'    => '1.005',
+  };
+
+  use Test::Needs;
+  needs 'Some::Module';
+
+  use Test::More;
+  use Test::Needs;
+  subtest 'my subtest' => sub {
+    needs 'Some::Module';
   };
 
 =head1 DESCRIPTION
 
-Skip tests if modules are not available.
+Skip test scripts if modules are not available.  The requested modules will be
+loaded, and optionally have their versions checked.  If the module is missing,
+the test script will be skipped.
+
+If used in a subtest, the rest of the subtest will be skipped.
+
+If the C<RELEASE_TESTING> environment variable is set, the tests will fail
+rather than skip.
+
+=head1 EXPORTS
+
+=head2 needs
+
+Has the same interface as the when using Test::Needs in a C<use>.
 
 =head1 AUTHOR
 
