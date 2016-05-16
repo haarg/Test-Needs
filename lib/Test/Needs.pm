@@ -124,6 +124,8 @@ sub _fail_or_skip {
         $tb->skip_all($message);
       }
     }
+    $tb->done_testing
+      if $tb->can('done_testing');
     die bless {} => 'Test::Builder::Exception'
       if $tb->can('parent') && $tb->parent;
   }
