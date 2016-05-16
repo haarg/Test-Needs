@@ -79,13 +79,36 @@ sub needs {
 
 sub _fail_or_skip {
   my $message = shift;
-  if ($INC{'Test2/API.pm'} || $INC{'Test/Builder.pm'}) {
-    require Test::Builder;
+  if ($INC{'Test2/API.pm'}) {
+    my $ctx = Test2::API::context();
+    my $hub = $ctx->hub;
+    my $e;
+    if ($ENV{RELEASE_TESTING}) {
+      $e = $ctx->ok(0, "Test::Needs modules available", [$message]);
+    }
+    else {
+      my $plan = $hub->plan;
+      my $tests = $hub->count;
+      if ($plan || $tests) {
+        my $skips
+          = $plan && $plan ne 'NO PLAN' ? $plan - $tests : 1;
+        ($e) = map $ctx->skip("Test::Needs modules not available"), 1 .. $skips;
+        $ctx->note($message);
+      }
+      else {
+        $ctx->plan(0, 'SKIP', $message);
+      }
+    }
+    $hub->finalize($ctx->trace, 1);
+    $ctx->release;
+    $hub->terminate(0, $e)
+      if $hub->can('nested') && $hub->nested;
+  }
+  elsif ($INC{'Test/Builder.pm'}) {
     my $tb = Test::Builder->new;
     if ($ENV{RELEASE_TESTING}) {
       $tb->ok(0, "Test::Needs modules available");
       $tb->diag($message);
-      _terminate($tb);
     }
     else {
       my $plan = $tb->has_plan;
@@ -96,12 +119,13 @@ sub _fail_or_skip {
         $tb->skip("Test::Needs modules not available")
           for 1 .. $skips;
         $tb->note($message);
-        _terminate($tb);
       }
       else {
         $tb->skip_all($message);
       }
     }
+    die bless {} => 'Test::Builder::Exception'
+      if $tb->can('parent') && $tb->parent;
   }
   else {
     if ($ENV{RELEASE_TESTING}) {
@@ -112,22 +136,6 @@ sub _fail_or_skip {
     }
     else {
       print "1..0 # SKIP $message\n";
-      exit 0;
-    }
-  }
-}
-
-sub _terminate {
-  my $tb = shift;
-  if ($tb->can('parent') && $tb->parent) {
-    if ($INC{'Test2/API.pm'}) {
-      my $ctx = Test2::API::context();
-      my $hub = $ctx->hub;
-      $ctx->release;
-      $hub->terminate(0, Test2::Event::Ok->new);
-    }
-    else {
-      die bless {} => 'Test::Builder::Exception';
     }
   }
   exit 0;
