@@ -15,7 +15,7 @@ BEGIN {
 sub _try_require {
   local %^H
     if _WORK_AROUND_HINT_LEAKAGE;
-  my ($module, $version) = @_;
+  my ($module) = @_;
   (my $file = "$module.pm") =~ s{::|'}{/}g;
   my $err;
   {
@@ -34,7 +34,15 @@ sub _try_require {
 sub _find_missing {
   my @bad = map {
     my ($module, $version) = @$_;
-    if (_try_require($module)) {
+    if ($module eq 'perl') {
+      if ("$]" < $version) {
+        "perl $version (have $])";
+      }
+      else {
+        ();
+      }
+    }
+    elsif (_try_require($module)) {
       local $@;
       if (defined $version && !eval { $module->VERSION($version); 1 }) {
         "$module $version (have ".$module->VERSION.')';
@@ -51,6 +59,15 @@ sub _find_missing {
     if (ref) {
       my $arg = $_;
       map [ $_ => $arg->{$_} ], sort keys %$arg;
+    }
+    elsif (/^[0-9]+\.[0-9]+$/) {
+      [ perl => sprintf '%.6f', $_ ];
+    }
+    elsif (/^v?([0-9]+(?:\.[0-9]+)+)$/) {
+      my @p = split /\./, $1;
+      push @p, 0
+        until @p >= 3;
+      [ perl => sprintf '%d.%03d%03d', @p ];
     }
     else {
       [ $_ => undef ];
