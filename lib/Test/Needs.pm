@@ -176,7 +176,7 @@ Test::Needs - Skip tests when modules not available
   use Test::Needs 'Some::Module';
 
   use Test::Needs {
-    'Some::Module'    => '1.005',
+    'Some::Module' => '1.005',
   };
 
   use Test::Needs;
@@ -185,8 +185,10 @@ Test::Needs - Skip tests when modules not available
   use Test::More;
   use Test::Needs;
   subtest 'my subtest' => sub {
-    needs 'Some::Module';
+    needs 'Some::Module';  # skips remainder of subtest
   };
+
+  use Test::Needs 5.020;
 
 =head1 DESCRIPTION
 
@@ -201,11 +203,13 @@ If the C<RELEASE_TESTING> environment variable is set, the tests will fail
 rather than skip.  Subtests will be aborted, but the test script will continue
 running after that point.
 
+If a bare version number is specified, it is checked against the perl version.
+
 =head1 EXPORTS
 
 =head2 needs
 
-Has the same interface as the when using Test::Needs in a C<use>.
+Has the same interface as when using Test::Needs in a C<use>.
 
 =head1 SEE ALSO
 
