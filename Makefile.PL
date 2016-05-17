@@ -7,16 +7,15 @@ my %META = (
   license => 'perl_5',
   prereqs => {
     configure => { requires => {
-      'ExtUtils::MakeMaker'   => 0,
+      'ExtUtils::MakeMaker' => 0,
     } },
     test => {
       requires => {
-        'Test::More'  => 0.94,
+        'Test::More' => 0.47,
       },
     },
     runtime => {
       requires => {
-        'Test::Builder' => 0,
       },
     },
     develop => {
