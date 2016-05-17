@@ -40,6 +40,7 @@ my %META = (
   no_index => {
     directory => [ 't', 'xt' ]
   },
+  dynamic_config => 0,
 );
 
 my %MM_ARGS = ();
