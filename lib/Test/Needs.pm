@@ -4,8 +4,6 @@ use warnings;
 our $VERSION = '0.001003';
 $VERSION =~ tr/_//d;
 
-use Exporter ();
-
 BEGIN {
   *_WORK_AROUND_HINT_LEAKAGE
     = "$]" < 5.011 && !("$]" >= 5.009004 && "$]" < 5.010001)
