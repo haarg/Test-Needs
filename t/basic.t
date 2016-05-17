@@ -54,7 +54,7 @@ for my $api (
 
     $check->(
       [$missing],
-      qr/^1\.\.0 # SKIP/,
+      qr/^1\.\.0 # SKIP/i,
       'Missing module SKIPs',
     );
     $check->(
@@ -64,12 +64,12 @@ for my $api (
     );
     $check->(
       ['ModuleWithVersion'],
-      qr/^(?!1\.\.0 # SKIP)/,
+      qr/^(?!1\.\.0 # SKIP)/i,
       'Working module runs',
     );
     $check->(
       ['ModuleWithVersion', 2],
-      qr/^1\.\.0 # SKIP/,
+      qr/^1\.\.0 # SKIP/i,
       'Outdated module SKIPs',
     );
     next
@@ -111,7 +111,7 @@ for my $api (
 
       $check->(
         [$missing, '--subtest'],
-        [ qr/^ +1\.\.0 # SKIP/m, qr/^[^ ][^\n]+# skip/m ],
+        [ qr/^ +1\.\.0 # SKIP/mi, qr/^[^ ][^\n]+# skip/m ],
         'Missing module skips in subtest',
       );
       $check->(
@@ -121,12 +121,12 @@ for my $api (
       );
       $check->(
         ['ModuleWithVersion', '--subtest'],
-        [ qr/^ +1\.\.(?!0 # SKIP)/m, qr/^ok[^\n#]+(?!# skip)/m ],
+        [ qr/^ +1\.\.(?!0 # SKIP)/mi, qr/^ok[^\n#]+(?!# skip)/m ],
         'Working module runs in subtest',
       );
       $check->(
         ['ModuleWithVersion', 2, '--subtest'],
-        [ qr/^ +1\.\.0 # SKIP/m, qr/^[^ ][^\n]+# skip/m ],
+        [ qr/^ +1\.\.0 # SKIP/mi, qr/^[^ ][^\n]+# skip/m ],
         'Outdated module skips in subtest',
       );
 
