@@ -35,8 +35,13 @@ for my $api (
       my ($exit, $out)
         = capture @perl, '-MTestScript' . (@args ? '='.join(',', @args) : '');
       $name .= " ($label)";
-      my @match = ref $match eq 'ARRAY' ? @$match : $match;
-      if ($exit != 0) {
+      my $want_exit;
+      if (ref $match eq 'HASH') {
+        $want_exit = $match->{exit};
+        $match = $match->{match};
+      }
+      my @match = ref $match eq 'ARRAY' ? @$match : $match ? $match : ();
+      if ($exit && !$want_exit) {
         ok 0, $name;
         diag "Exit status $exit\nOutput:\n$out";
       }
@@ -53,8 +58,8 @@ for my $api (
       'Missing module SKIPs',
     );
     $check->(
-      ['BrokenModule', '--die'],
-      qr/syntax error/,
+      ['BrokenModule'],
+      { match => qr/syntax error/, exit => 1 },
       'Broken module dies',
     );
     $check->(
@@ -110,8 +115,8 @@ for my $api (
         'Missing module skips in subtest',
       );
       $check->(
-        ['BrokenModule', '--subtest', '--die'],
-        qr/syntax error/,
+        ['BrokenModule', '--subtest'],
+        { match => qr/syntax error/, exit => 1 },
         'Broken module dies in subtest',
       );
       $check->(

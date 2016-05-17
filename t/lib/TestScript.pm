@@ -2,20 +2,11 @@ package TestScript;
 use strict;
 use warnings;
 
-our $die;
-END {
-  if ($die) {
-    $? = $? ? 0 : 1;
-    warn "setting exit to $?";
-  }
-}
-
 sub import {
   my $class = shift;
   my $opts = { map { /^--([^=]*)(?:=(.*))?/ ? ($1 => $2||1) : () } @_ };
   my @args = grep !/^--/, @_;
   @args = @args == 1 ? @args : { @args };
-  $die = $opts->{die};
   if ($opts->{load}) {
     eval qq{ package main; use $opts->{load}; 1; } or die $@;
   }
