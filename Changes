@@ -1,4 +1,7 @@
 Revision history for Test::Needs
 
+  - fix compatibility with older Test::More and perl
+  - fix prerequisites to be more accurate
+
 0.001000 - 2016-05-17
   - initial release
