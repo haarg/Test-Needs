@@ -106,7 +106,7 @@ for my $api (
     );
 
     SKIP: {
-      skip 'Test::More too old to run subtests', 1
+      skip 'Test::More too old to run subtests', 12
         if !Test::More->can('subtest');
 
       $check->(
