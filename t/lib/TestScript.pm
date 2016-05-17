@@ -47,7 +47,7 @@ sub do_test {
     require Test::More;
     Test::More::pass();
   }
-  Test::Needs::needs(@args);
+  Test::Needs::test_needs(@args);
   require Test::More;
   Test::More::plan(tests => 2)
     unless $opts->{tests} || $opts->{plan} || $opts->{no_plan};

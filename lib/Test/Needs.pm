@@ -79,13 +79,13 @@ sub import {
   my $target = caller;
   if (@_) {
     local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-    needs(@_);
+    test_needs(@_);
   }
   no strict 'refs';
-  *{"${target}::needs"} = \&needs;
+  *{"${target}::test_needs"} = \&test_needs;
 }
 
-sub needs {
+sub test_needs {
   my $missing = _find_missing(@_);
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
   _fail_or_skip($missing)
@@ -178,12 +178,12 @@ Test::Needs - Skip tests when modules not available
   };
 
   use Test::Needs;
-  needs 'Some::Module';
+  test_needs 'Some::Module';
 
   use Test::More;
   use Test::Needs;
   subtest 'my subtest' => sub {
-    needs 'Some::Module';  # skips remainder of subtest
+    test_needs 'Some::Module';  # skips remainder of subtest
   };
 
   use Test::Needs 5.020;
@@ -205,7 +205,7 @@ If a bare version number is specified, it is checked against the perl version.
 
 =head1 EXPORTS
 
-=head2 needs
+=head2 test_needs
 
 Has the same interface as when using Test::Needs in a C<use>.
 
