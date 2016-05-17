@@ -88,17 +88,20 @@ sub import {
 sub test_needs {
   my $missing = _find_missing(@_);
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  _fail_or_skip($missing)
+  _fail_or_skip($missing, $ENV{RELEASE_TESTING})
     if $missing;
 }
 
+sub _skip { _fail_or_skip($_[0], 0) }
+sub _fail { _fail_or_skip($_[0], 1) }
+
 sub _fail_or_skip {
-  my $message = shift;
+  my ($message, $fail) = @_;
   if ($INC{'Test2/API.pm'}) {
     my $ctx = Test2::API::context();
     my $hub = $ctx->hub;
     my $e;
-    if ($ENV{RELEASE_TESTING}) {
+    if ($fail) {
       $e = $ctx->ok(0, "Test::Needs modules available", [$message]);
     }
     else {
@@ -121,7 +124,7 @@ sub _fail_or_skip {
   }
   elsif ($INC{'Test/Builder.pm'}) {
     my $tb = Test::Builder->new;
-    if ($ENV{RELEASE_TESTING}) {
+    if ($fail) {
       $tb->ok(0, "Test::Needs modules available");
       $tb->diag($message);
     }
@@ -145,7 +148,7 @@ sub _fail_or_skip {
       if $tb->can('parent') && $tb->parent;
   }
   else {
-    if ($ENV{RELEASE_TESTING}) {
+    if ($fail) {
       print "1..1\n";
       print "not ok 1 - Test::Needs modules available\n";
       print STDERR "# $message\n";
