@@ -136,7 +136,7 @@ sub _fail_or_skip {
           = $plan && $plan ne 'no_plan' ? $plan - $tests : 1;
         $tb->skip("Test::Needs modules not available")
           for 1 .. $skips;
-        $tb->note($message);
+        $tb->can('note') ? $tb->note($message) : print "# $message\n";
       }
       else {
         $tb->skip_all($message);
