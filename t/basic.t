@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4 + 21*2;
+use Test::More tests => 4 + 19*2;
 use IPC::Open3;
 
 delete $ENV{RELEASE_TESTING};
@@ -11,12 +11,12 @@ my $missing = "Module::Does::Not::Exist::".time;
 
 sub capture {
   my $pid = open3 my $stdin, my $stdout, undef, @_
-    or die "can't run perl: $!";
+    or die "can't run @_: $!";
   my $out = do { local $/; <$stdout> };
   close $stdout;
   waitpid $pid, 0;
   my $exit = $?;
-  return ($exit, $out);
+  return wantarray ? ($exit, $out) : $exit;
 }
 
 for my $api (
@@ -26,7 +26,7 @@ for my $api (
 ) {
   SKIP: {
     my ($label, @load) = @$api;
-    if (my $missing = grep { (my $f = "$_.pm") =~ s{'|::}{/}g; ! eval { require $f } } @load) {
+    if (my $missing = grep +(capture @perl, "-m$_", '-e1'), @load) {
       skip "$label not available", 21;
     }
     my $check = sub {
@@ -106,12 +106,12 @@ for my $api (
     );
 
     SKIP: {
-      skip 'Test::More too old to run subtests', 12
+      skip 'Test::More too old to run subtests', 10
         if !Test::More->can('subtest');
 
       $check->(
         [$missing, '--subtest'],
-        [ qr/^ +1\.\.0 # SKIP/mi, qr/^[^ ][^\n]+# skip/m ],
+        qr/^ +1\.\.0 # SKIP/mi,
         'Missing module skips in subtest',
       );
       $check->(
@@ -126,7 +126,7 @@ for my $api (
       );
       $check->(
         ['ModuleWithVersion', 2, '--subtest'],
-        [ qr/^ +1\.\.0 # SKIP/mi, qr/^[^ ][^\n]+# skip/m ],
+        qr/^ +1\.\.0 # SKIP/mi,
         'Outdated module skips in subtest',
       );
 
