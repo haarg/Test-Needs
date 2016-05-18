@@ -1,6 +1,51 @@
 package TestScript;
 use strict;
 use warnings;
+use Test::Needs;
+
+sub plan;
+sub subtest;
+sub done_testing;
+sub ok;
+
+for my $sub (qw(plan ok subtest done_testing)) {
+  no strict 'refs';
+  no warnings 'redefine';
+  *$sub = sub {
+    if (!$INC{'Test2/API.pm'}) {
+      require Test::Builder;
+      my $tb = Test::Builder->new;
+      for my $install (qw(plan ok subtest done_testing)) {
+        *{$install} = sub {
+          $tb->$install(@_);
+        };
+      }
+    }
+    else {
+      *plan = sub {
+        my $ctx = Test2::API::context();
+        $ctx->plan(
+          $_[0] eq 'no_plan' ? (0, 'NO PLAN')
+          : $_[0] eq 'tests' ? ($_[1])
+          : @_
+        );
+        $ctx->release;
+      };
+      *subtest = \&Test2::API::run_subtest;
+      *ok = sub {
+        my $ctx = Test2::API::context();
+        $ctx->ok(@_);
+        $ctx->release;
+      };
+      *done_testing = sub {
+        my $ctx = Test2::API::context();
+        $ctx->done_testing;
+        $ctx->release;
+      };
+    }
+    goto &$sub;
+  };
+}
 
 sub import {
   my $class = shift;
@@ -12,9 +57,8 @@ sub import {
   }
 
   if ($opts->{subtest}) {
-    require Test::More;
-    Test::More::plan(tests => 1);
-    Test::More::subtest('subtest' => sub { do_test($opts, @args) });
+    plan tests => 1;
+    subtest subtest => sub { do_test($opts, @args) };
   }
   else {
     do_test($opts, @args);
@@ -25,27 +69,22 @@ sub import {
 
 sub do_test {
   my ($opts, @args) = @_;
-  require Test::Needs;
   if ($opts->{plan}) {
-    require Test::More;
-    Test::More::plan(tests => 2);
+    plan tests => 2;
   }
   elsif ($opts->{no_plan}) {
-    require Test::More;
-    Test::More::plan('no_plan');
+    plan 'no_plan';
   }
   if ($opts->{tests}) {
-    require Test::More;
-    Test::More::pass();
+    ok 1;
   }
-  Test::Needs::test_needs(@args);
-  require Test::More;
-  Test::More::plan(tests => 2)
+  test_needs @args;
+  plan tests => 2
     unless $opts->{tests} || $opts->{plan} || $opts->{no_plan};
-  Test::More::pass();
-  Test::More::pass()
+  ok 1;
+  ok 1
     unless $opts->{tests};
-  Test::More::done_testing()
+  done_testing
     if $opts->{tests} && !($opts->{plan} || $opts->{no_plan});
 }
 
