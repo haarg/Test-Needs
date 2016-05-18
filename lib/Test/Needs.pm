@@ -33,6 +33,28 @@ sub _find_missing {
   my @bad = map {
     my ($module, $version) = @$_;
     if ($module eq 'perl') {
+      $version
+        = !$version ? 0
+        : $version =~ /^[0-9]+\.[0-9]+$/ ? sprintf('%.6f', $version)
+        : $version =~ /^v?([0-9]+(?:\.[0-9]+)+)$/ ? do {
+          my @p = split /\./, $1;
+          push @p, 0
+            until @p >= 3;
+          sprintf '%d.%03d%03d', @p;
+        }
+        : $version =~ /^\x05..?$/s ? do {
+          my @p = map ord, split //, $version;
+          push @p, 0
+            until @p >= 3;
+          sprintf '%d.%03d%03d', @p;
+        }
+        : do {
+          use warnings FATAL => 'numeric';
+          no warnings 'void';
+          eval { 0 + $version; 1 } ? $version
+            : die sprintf qq{version "%s" for perl does not look like a number at %s line %s.\n},
+              $version, (caller( 1 + ($Test::Builder::Level||0) ))[1,2];
+        };
       if ("$]" < $version) {
         "perl $version (have $])";
       }
@@ -57,15 +79,6 @@ sub _find_missing {
     if (ref) {
       my $arg = $_;
       map [ $_ => $arg->{$_} ], sort keys %$arg;
-    }
-    elsif (/^[0-9]+\.[0-9]+$/) {
-      [ perl => sprintf '%.6f', $_ ];
-    }
-    elsif (/^v?([0-9]+(?:\.[0-9]+)+)$/) {
-      my @p = split /\./, $1;
-      push @p, 0
-        until @p >= 3;
-      [ perl => sprintf '%d.%03d%03d', @p ];
     }
     else {
       [ $_ => undef ];
@@ -189,8 +202,8 @@ Test::Needs - Skip tests when modules not available
     test_needs 'Some::Module';  # skips remainder of subtest
   };
 
-  # must be quoted
-  use Test::Needs '5.020';
+  # check perl version
+  use Test::Needs { perl => 5.020 };
 
 =head1 DESCRIPTION
 
@@ -204,8 +217,6 @@ If used in a subtest, the rest of the subtest will be skipped.
 If the C<RELEASE_TESTING> environment variable is set, the tests will fail
 rather than skip.  Subtests will be aborted, but the test script will continue
 running after that point.
-
-If a bare version number is specified, it is checked against the perl version.
 
 =head1 EXPORTS
 
