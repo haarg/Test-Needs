@@ -189,7 +189,8 @@ Test::Needs - Skip tests when modules not available
     test_needs 'Some::Module';  # skips remainder of subtest
   };
 
-  use Test::Needs 5.020;
+  # must be quoted
+  use Test::Needs '5.020';
 
 =head1 DESCRIPTION
 
