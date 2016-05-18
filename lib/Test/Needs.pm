@@ -81,9 +81,13 @@ sub _find_missing {
     }
   }
   map {
-    if (ref) {
+    if (ref eq 'HASH') {
       my $arg = $_;
       map [ $_ => $arg->{$_} ], sort keys %$arg;
+    }
+    elsif (ref eq 'ARRAY') {
+      my $arg = $_;
+      map [ @{$arg}[$_*2,$_*2+1] ], 0 .. int($#$arg / 2);
     }
     else {
       [ $_ => undef ];
