@@ -194,10 +194,12 @@ Test::Needs - Skip tests when modules not available
 
   use Test::Needs 'Some::Module';
 
+  # check module version
   use Test::Needs {
     'Some::Module' => '1.005',
   };
 
+  # check later
   use Test::Needs;
   test_needs 'Some::Module';
 
