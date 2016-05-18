@@ -26,15 +26,20 @@ for my $api (
 ) {
   SKIP: {
     my ($label, @load) = @$api;
-    if (my $missing = grep +(capture @perl, "-m$_", '-e1'), @load) {
-      skip "$label not available", 21;
-    }
+    my @using = map {
+      my ($e, $o) = capture @perl, "-m$_", "-eprint+$_->VERSION";
+      skip "$label not available", 21
+        if $e;
+      "$_ $o";
+    } @load;
+    printf "# Checking against ".join(', ', @using)."\n"
+      if @using;
     my $check = sub {
       my ($args, $match, $name) = @_;
       my @args = ((map "--load=$_", @load), @$args);
       my ($exit, $out)
         = capture @perl, '-MTestScript' . (@args ? '='.join(',', @args) : '');
-      $name .= " ($label)";
+      $name = "$label: $name";
       my $want_exit;
       if (ref $match eq 'HASH') {
         $want_exit = $match->{exit};
