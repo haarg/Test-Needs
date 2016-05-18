@@ -19,19 +19,36 @@ sub capture {
   return ($exit, $out);
 }
 
-for my $api (
-  ['standalone'],
-  ['Test2' => 'Test2::API'],
-  ['Test::Builder' => 'Test::Builder']
-) {
+my $apis = {
+  standalone => {
+    testable => sub { 1 },
+    script_args => [],
+  },
+  Test2 => {
+    testable => sub {
+      eval { require Test2::API;       1 } or die "Test2::API not available";
+      eval { Test2::API->VERSION(1.3); 1 } or die "Test2::API version not new enough for this test";
+    },
+    script_args => [ '--load=Test2::API' ],
+  },
+  'Test::Builder' => {
+    testable => sub {
+      eval { require Test::Builder; 1 } or die "Test::Builder not available";
+    },
+    script_args => [ '--load=Test::Builder' ],
+  },
+};
+
+for my $label ('standalone','Test2','Test::Builder') {
   SKIP: {
-    my ($label, @load) = @$api;
-    if (my $missing = grep { (my $f = "$_.pm") =~ s{'|::}{/}g; ! eval { require $f } } @load) {
-      skip "$label not available", 21;
-    }
+    my $api = $apis->{ $label };
+
+    local $@;
+    eval { $api->{testable}->(); 1 } or skip "$label not testable, $@", 21;
+
     my $check = sub {
       my ($args, $match, $name) = @_;
-      my @args = ((map "--load=$_", @load), @$args);
+      my @args = (@{$api->{script_args}}, @$args);
       my ($exit, $out)
         = capture @perl, '-MTestScript' . (@args ? '='.join(',', @args) : '');
       $name .= " ($label)";
@@ -73,7 +90,7 @@ for my $api (
       'Outdated module SKIPs',
     );
     next
-      unless @load;
+      unless @{ $api->{script_args} };
 
     $check->(
       [$missing, '--plan'],
