@@ -62,6 +62,11 @@ sub _find_missing {
         ();
       }
     }
+    elsif ($module =~ /^\d|[^\w:]|[^:]:[^:]|^:|:$/) {
+      die sprintf qq{"%s" does not look like a module name at %s line %s.\n},
+        $module, (caller( 1 + ($Test::Builder::Level||0) ))[1,2];
+      die
+    }
     elsif (_try_require($module)) {
       local $@;
       if (defined $version && !eval { $module->VERSION($version); 1 }) {
