@@ -1,5 +1,10 @@
 Revision history for Test::Needs
 
+  - drop support for bare versions meaning perl version checks.  The perl
+    version can still be checked using the hashref interface.
+  - reject invalid module names rather than treating them as missing.
+  - fix tests when Test2 and old Test::Builder are installed.
+
 0.001001 - 2016-05-17
   - fix compatibility with older Test::More and perl
   - fix prerequisites to be more accurate
