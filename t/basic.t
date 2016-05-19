@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4 + 19*2;
+use Test::More tests => 8*3 + 16*2;
 use IPC::Open3;
 
 delete $ENV{RELEASE_TESTING};
@@ -28,7 +28,7 @@ for my $api (
     my ($label, @load) = @$api;
     my @using = map {
       my ($e, $o) = capture @perl, "-m$_", "-eprint+$_->VERSION";
-      skip "$label not available", 21
+      skip "$label not available", 8+16
         if $e;
       "$_ $o";
     } @load;
@@ -77,6 +77,31 @@ for my $api (
       qr/^1\.\.0 # SKIP/i,
       'Outdated module SKIPs',
     );
+
+    {
+      local $ENV{RELEASE_TESTING} = 1;
+      $check->(
+        [$missing],
+        { match => qr/^not ok/m, exit => 1 },
+        'Missing module fails with RELEASE_TESTING',
+      );
+      $check->(
+        ['BrokenModule'],
+        { match => qr/syntax error/, exit => 1 },
+        'Broken module dies with RELEASE_TESTING',
+      );
+      $check->(
+        ['ModuleWithVersion'],
+        qr/^(?!1\.\.0 # SKIP)/i,
+        'Working module runs with RELEASE_TESTING',
+      );
+      $check->(
+        ['ModuleWithVersion', 2],
+        { match => qr/^not ok/m, exit => 1 },
+        'Outdated module fails with RELEASE_TESTING',
+      );
+    }
+
     next
       unless @load;
 
@@ -111,7 +136,7 @@ for my $api (
     );
 
     SKIP: {
-      skip 'Test::More too old to run subtests', 10
+      skip 'Test::More too old to run subtests', 11
         if !Test::More->can('subtest');
 
       $check->(
@@ -159,6 +184,13 @@ for my $api (
         [$missing, '--subtest', '--no_plan', '--tests'],
         qr/# skip/,
         'Missing module passes with no_plan and tests in subtest',
+      );
+
+      local $ENV{RELEASE_TESTING} = 1;
+      $check->(
+        [$missing, '--subtest'],
+        { match => qr/^ +not ok/m, exit => 1 },
+        'Missing module fails in subtest with RELEASE_TESTING',
       );
     }
   }
