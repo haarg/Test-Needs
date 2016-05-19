@@ -8,6 +8,9 @@ BEGIN {
   *_WORK_AROUND_HINT_LEAKAGE
     = "$]" < 5.011 && !("$]" >= 5.009004 && "$]" < 5.010001)
     ? sub(){1} : sub(){0};
+  *_WORK_AROUND_BROKEN_MODULE_STATE
+    = "$]" < 5.009
+    ? sub(){1} : sub(){0};
 }
 
 sub _try_require {
@@ -22,6 +25,8 @@ sub _try_require {
       or $err = $@;
   }
   if (defined $err) {
+    delete $INC{$file}
+      if _WORK_AROUND_BROKEN_MODULE_STATE;
     die $err
       unless $err =~ /\ACan't locate \Q$file\E/;
     return !1;
