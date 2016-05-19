@@ -11,7 +11,7 @@ my %META = (
     } },
     test => {
       requires => {
-        'Test::More' => 0.47,
+        'Test::More' => 0.45,
       },
     },
     runtime => {

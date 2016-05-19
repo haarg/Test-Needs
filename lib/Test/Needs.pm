@@ -151,12 +151,16 @@ sub _fail_or_skip {
   }
   elsif ($INC{'Test/Builder.pm'}) {
     my $tb = Test::Builder->new;
+    my $has_plan = $tb->can('has_plan') ? 'has_plan'
+      : sub { $_[0]->expected_tests || eval { $_[0]->current_test($_[0]->current_test); 'no_plan' } };
     if ($fail) {
+      $tb->plan(tests => 1)
+        unless $tb->$has_plan;
       $tb->ok(0, "Test::Needs modules available");
       $tb->diag($message);
     }
     else {
-      my $plan = $tb->has_plan;
+      my $plan = $tb->$has_plan;
       my $tests = $tb->current_test;
       if ($plan || $tests) {
         my $skips

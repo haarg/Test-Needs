@@ -4,6 +4,7 @@ Revision history for Test::Needs
     version can still be checked using the hashref interface.
   - reject invalid module names rather than treating them as missing.
   - fix tests when Test2 and old Test::Builder are installed.
+  - be backwards compatible with Test::More 0.45
 
 0.001001 - 2016-05-17
   - fix compatibility with older Test::More and perl
