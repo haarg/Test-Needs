@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002000 - 2016-05-19
   - drop support for bare versions meaning perl version checks.  The perl
     version can still be checked using the hashref interface.
   - reject invalid module names rather than treating them as missing.
