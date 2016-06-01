@@ -205,9 +205,13 @@ Test::Needs - Skip tests when modules not available
 
 =head1 SYNOPSIS
 
+  # need one module
   use Test::Needs 'Some::Module';
 
-  # check module version
+  # need multiple modules
+  use Test::Needs 'Some::Module', 'Some::Other::Module';
+
+  # need a given version of a module
   use Test::Needs {
     'Some::Module' => '1.005',
   };
@@ -216,10 +220,12 @@ Test::Needs - Skip tests when modules not available
   use Test::Needs;
   test_needs 'Some::Module';
 
+  # skips remainder of subtest
   use Test::More;
   use Test::Needs;
   subtest 'my subtest' => sub {
-    test_needs 'Some::Module';  # skips remainder of subtest
+    test_needs 'Some::Module';
+    ...
   };
 
   # check perl version
@@ -232,7 +238,18 @@ loaded, and optionally have their versions checked.  If the module is missing,
 the test script will be skipped.  Modules that are found but fail to compile
 will exit with an error rather than skip.
 
-If used in a subtest, the rest of the subtest will be skipped.
+If used in a subtest, the remainder of the subtest will be skipped.
+
+Skipping will work even if some tests have already been run, or if a plan has
+been declared.
+
+Versions are checked via a C<< $module->VERSION($wanted_version) >> call.
+Versions must be provided in a format that will be accepted.  No extra
+processing is done on them.
+
+If C<perl> is used as a module, the version is checked against the running perl
+version (L<$]|perlvar/$]>).  The version can be specified as a number,
+dotted-decimal string, v-string, or version object.
 
 If the C<RELEASE_TESTING> environment variable is set, the tests will fail
 rather than skip.  Subtests will be aborted, but the test script will continue
@@ -255,6 +272,11 @@ as a C<use> statement (despite its name), calling the import sub.  Under
 C<RELEASE_TESTING>, it will BAIL_OUT if a module fails to load rather than
 using a normal test fail.  It also doesn't distinguish between missing modules
 and broken modules.
+
+=item L<Test2::Require::Module>
+
+Part of the L<Test2> ecosystem.  Only supports running as a C<use> command to
+skip an entire plan.
 
 =back
 

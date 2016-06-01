@@ -1,6 +1,7 @@
 Revision history for Test::Needs
 
   - additional for error messages and perl version handling
+  - improved documentation
 
 0.002000 - 2016-05-19
   - drop support for bare versions meaning perl version checks.  The perl
