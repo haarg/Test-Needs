@@ -144,10 +144,8 @@ sub _fail_or_skip {
         $ctx->plan(0, 'SKIP', $message);
       }
     }
-    $hub->finalize($ctx->trace, 1);
-    $ctx->release;
-    $hub->terminate(0, $e)
-      if $hub->can('nested') && $hub->nested;
+    $ctx->done_testing;
+    $ctx->send_event('+'._t2_terminate_event());
   }
   elsif ($INC{'Test/Builder.pm'}) {
     my $tb = Test::Builder->new;
@@ -190,6 +188,20 @@ sub _fail_or_skip {
     }
   }
   exit 0;
+}
+
+my $terminate_event;
+sub _t2_terminate_event () {
+  $terminate_event ||= eval q{
+    $INC{'Test/Needs/Event/Terminate.pm'} = $INC{'Test/Needs.pm'};
+    package # hide
+      Test::Needs::Event::Terminate;
+    use Test2::Event ();
+    our @ISA = qw(Test2::Event);
+    sub no_display { 1 }
+    sub terminate { 0 }
+    __PACKAGE__;
+  } or die $@;
 }
 
 1;
