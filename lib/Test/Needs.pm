@@ -61,7 +61,7 @@ sub _find_missing {
               $version, (caller( 1 + ($Test::Builder::Level||0) ))[1,2];
         };
       if ("$]" < $version) {
-        "perl $version (have $])";
+        sprintf "perl %s (have %.6f)", $version, $];
       }
       else {
         ();

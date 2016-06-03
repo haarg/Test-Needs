@@ -10,9 +10,7 @@ my $have_vpm = eval { require version };
 
 for my $v ($] - 0.001, $], $] + 0.001) {
   my $fail = $v > $];
-  my @parts = $v =~ /^(\d+)\.(\d{3})*/;
-  push @parts, 0
-    until @parts > 2;
+  my @parts = sprintf('%.6f', $v) =~ /^(\d+)\.(\d{3})(\d{3})/;
   my $str_v = join '.', map $_+0, @parts;
   for my $c (
     $v,
