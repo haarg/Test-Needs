@@ -127,9 +127,8 @@ sub _fail_or_skip {
   if ($INC{'Test2/API.pm'}) {
     my $ctx = Test2::API::context();
     my $hub = $ctx->hub;
-    my $e;
     if ($fail) {
-      $e = $ctx->ok(0, "Test::Needs modules available", [$message]);
+      $ctx->ok(0, "Test::Needs modules available", [$message]);
     }
     else {
       my $plan = $hub->plan;
@@ -137,7 +136,7 @@ sub _fail_or_skip {
       if ($plan || $tests) {
         my $skips
           = $plan && $plan ne 'NO PLAN' ? $plan - $tests : 1;
-        ($e) = map $ctx->skip("Test::Needs modules not available"), 1 .. $skips;
+        $ctx->skip("Test::Needs modules not available") for 1 .. $skips;
         $ctx->note($message);
       }
       else {
