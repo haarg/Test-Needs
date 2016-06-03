@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002002 - 2016-06-03
   - fix tests on non .0 perl versions
 
 0.002001 - 2016-06-03
