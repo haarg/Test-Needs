@@ -191,6 +191,7 @@ sub _fail_or_skip {
 
 my $terminate_event;
 sub _t2_terminate_event () {
+  local $@;
   $terminate_event ||= eval q{
     $INC{'Test/Needs/Event/Terminate.pm'} = $INC{'Test/Needs.pm'};
     package # hide
@@ -200,7 +201,7 @@ sub _t2_terminate_event () {
     sub no_display { 1 }
     sub terminate { 0 }
     __PACKAGE__;
-  } or die $@;
+  } or die "$@";
 }
 
 1;
