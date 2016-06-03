@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002001 - 2016-06-03
   - additional for error messages and perl version handling
   - improved documentation
   - use supported API for terminating subtests in Test2
