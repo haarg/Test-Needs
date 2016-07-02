@@ -16,6 +16,7 @@ my %META = (
     },
     runtime => {
       requires => {
+        'perl' => 5.006,
       },
     },
     develop => {
