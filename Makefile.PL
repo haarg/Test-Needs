@@ -41,6 +41,9 @@ my %META = (
     directory => [ 't', 'xt' ]
   },
   dynamic_config => 0,
+  x_cpants => { ignore => {
+    prereq_matches_use => 'required modules detected incorrectly',
+  } },
 );
 
 my %MM_ARGS = ();
