@@ -1,6 +1,7 @@
 package Test::Needs;
 use strict;
 use warnings;
+no warnings 'once';
 our $VERSION = '0.002002';
 $VERSION =~ tr/_//d;
 
@@ -144,6 +145,7 @@ sub _fail_or_skip {
       }
     }
     $ctx->done_testing;
+    $ctx->release if $Test2::API::VERSION < 1.302053;
     $ctx->send_event('+'._t2_terminate_event());
   }
   elsif ($INC{'Test/Builder.pm'}) {

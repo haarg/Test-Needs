@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 8*3 + 16*2;
+use Test::More tests => 9*3 + 16*2;
 use IPC::Open3;
 
 delete $ENV{RELEASE_TESTING};
@@ -41,18 +41,25 @@ for my $api (
         = capture @perl, '-MTestScript' . (@args ? '='.join(',', @args) : '');
       $name = "$label: $name";
       my $want_exit;
+      my $unmatch;
       if (ref $match eq 'HASH') {
         $want_exit = $match->{exit};
+        $unmatch = $match->{unmatch};
         $match = $match->{match};
       }
-      my @match = ref $match eq 'ARRAY' ? @$match : $match ? $match : ();
+      $match = !defined $match ? [] : ref $match eq 'ARRAY' ? $match : [$match];
+      $unmatch = !defined $unmatch ? [] : ref $unmatch eq 'ARRAY' ? $unmatch : [$unmatch];
       if ($exit && !$want_exit) {
-        ok 0, $name;
+        ok 0, $name
+          for 0 .. ($#$match + $#$unmatch)||1;
         diag "Exit status $exit\nOutput:\n$out";
       }
       else {
-        for my $m (@match) {
+        for my $m (@$match) {
           like $out, $m, $name;
+        }
+        for my $um (@$unmatch) {
+          unlike $out, $um, $name;
         }
       }
     };
@@ -97,7 +104,7 @@ for my $api (
       );
       $check->(
         ['ModuleWithVersion', 2],
-        { match => qr/^not ok/m, exit => 1 },
+        { match => qr/^not ok/m, unmatch => qr/Cleaning up the CONTEXT stack/, exit => 1 },
         'Outdated module fails with RELEASE_TESTING',
       );
     }
