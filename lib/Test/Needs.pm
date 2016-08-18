@@ -14,6 +14,8 @@ BEGIN {
     ? sub(){1} : sub(){0};
 }
 
+our @EXPORT = qw(test_needs);
+
 sub _try_require {
   local %^H
     if _WORK_AROUND_HINT_LEAKAGE;
@@ -119,7 +121,8 @@ sub import {
     test_needs(@_);
   }
   no strict 'refs';
-  *{"${target}::test_needs"} = \&test_needs;
+  *{"${target}::$_"} = \&{"${class}::$_"}
+    for @{"${class}::EXPORT"};
 }
 
 sub test_needs {
