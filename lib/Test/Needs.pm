@@ -35,6 +35,17 @@ sub _try_require {
   !0;
 }
 
+sub _croak {
+  my $message = join '', @_;
+  my $i = 1;
+  while (my ($p, $f, $l) = caller($i++)) {
+    next
+      if $p->isa(__PACKAGE__);
+    die "$message at $f line $l.\n";
+  }
+  die $message;
+}
+
 sub _find_missing {
   my @bad = map {
     my ($module, $version) = @$_;
@@ -58,8 +69,8 @@ sub _find_missing {
           use warnings FATAL => 'numeric';
           no warnings 'void';
           eval { 0 + $version; 1 } ? $version
-            : die sprintf qq{version "%s" for perl does not look like a number at %s line %s.\n},
-              $version, (caller( 1 + ($Test::Builder::Level||0) ))[1,2];
+            : _croak sprintf qq{version "%s" for perl does not look like a number},
+              $version;
         };
       if ("$]" < $version) {
         sprintf "perl %s (have %.6f)", $version, $];
@@ -69,8 +80,7 @@ sub _find_missing {
       }
     }
     elsif ($module =~ /^\d|[^\w:]|:::|[^:]:[^:]|^:|:$/) {
-      die sprintf qq{"%s" does not look like a module name at %s line %s.\n},
-        $module, (caller( 1 + ($Test::Builder::Level||0) ))[1,2];
+      _croak sprintf qq{"%s" does not look like a module name}, $module;
     }
     elsif (_try_require($module)) {
       local $@;
