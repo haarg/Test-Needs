@@ -28,7 +28,7 @@ for my $api (
     my ($label, @load) = @$api;
     my @using = map {
       my ($e, $o) = capture @perl, "-m$_", "-eprint+$_->VERSION";
-      skip "$label not available", 8+16
+      skip "$label not available", 9+16
         if $e;
       "$_ $o";
     } @load;
