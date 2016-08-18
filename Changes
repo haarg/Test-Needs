@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002004 - 2016-08-18
   - fix test counts when Test2 not available
 
 0.002003 - 2016-08-18
