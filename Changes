@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002003 - 2016-08-18
   - fix loud warnings when aborting a test under Test2
   - some kwalitee improvements
 
