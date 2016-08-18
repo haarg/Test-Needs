@@ -1,5 +1,8 @@
 Revision history for Test::Needs
 
+  - refactored internals to allow subclassing
+  - adjusted output for clarity and consistency
+
 0.002005 - 2016-09-27
   - fix skipping when Test::Tester (Test::More < v2) is loaded
 
