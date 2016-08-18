@@ -2,7 +2,7 @@ package Test::Needs;
 use strict;
 use warnings;
 no warnings 'once';
-our $VERSION = '0.002003';
+our $VERSION = '0.002004';
 $VERSION =~ tr/_//d;
 
 BEGIN {
