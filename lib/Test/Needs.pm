@@ -142,11 +142,12 @@ sub _needs_name { "Test::Needs modules" }
 
 sub __finish_test {
   my ($class, $message, $fail) = @_;
+  my $name = $class->_needs_name . ($fail ? '' : ' not') . ' available';
   if ($INC{'Test2/API.pm'}) {
     my $ctx = Test2::API::context();
     my $hub = $ctx->hub;
     if ($fail) {
-      $ctx->ok(0, $class->_needs_name . ' available', [$message]);
+      $ctx->ok(0, $name, [$message]);
     }
     else {
       my $plan = $hub->plan;
@@ -154,8 +155,8 @@ sub __finish_test {
       if ($plan || $tests) {
         my $skips
           = $plan && $plan ne 'NO PLAN' ? $plan - $tests : 1;
-        $ctx->skip($class->_needs_name . ' not available') for 1 .. $skips;
-        $ctx->note($message);
+        $ctx->skip($name) for 1 .. $skips;
+        $ctx->note(($skips ? '' : "$name: ") . $message);
       }
       else {
         $ctx->plan(0, 'SKIP', $message);
@@ -172,7 +173,7 @@ sub __finish_test {
     if ($fail) {
       $tb->plan(tests => 1)
         unless $tb->$has_plan;
-      $tb->ok(0, $class->_needs_name . ' available');
+      $tb->ok(0, $name);
       $tb->diag($message);
     }
     else {
@@ -181,7 +182,7 @@ sub __finish_test {
       if ($plan || $tests) {
         my $skips
           = $plan && $plan ne 'no_plan' ? $plan - $tests : 1;
-        $tb->skip($class->_needs_name . ' not available')
+        $tb->skip($name)
           for 1 .. $skips;
         Test::Builer->can('note') ? $tb->note($message) : print "# $message\n";
       }
@@ -197,7 +198,7 @@ sub __finish_test {
   else {
     if ($fail) {
       print "1..1\n";
-      print "not ok 1 - ".$class->_needs_name." available\n";
+      print "not ok 1 - $name\n";
       print STDERR "# $message\n";
       exit 1;
     }
