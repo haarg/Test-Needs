@@ -4,7 +4,9 @@ use Test::More tests => 3*5 + 9;
 use Test::Needs ();
 use lib 't/lib';
 
-*_find_missing = \&Test::Needs::_find_missing;
+sub _find_missing {
+  Test::Needs->_find_missing(@_);
+}
 
 my $have_vpm = eval { require version };
 

@@ -49,6 +49,7 @@ sub _croak {
 }
 
 sub _find_missing {
+  my $class = shift;
   my @bad = map {
     my ($module, $version) = @$_;
     if ($module eq 'perl') {
@@ -118,7 +119,7 @@ sub import {
   my $target = caller;
   if (@_) {
     local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-    test_needs(@_);
+    $class->_needs(@_);
   }
   no strict 'refs';
   *{"${target}::$_"} = \&{"${class}::$_"}
@@ -126,22 +127,26 @@ sub import {
 }
 
 sub test_needs {
-  my $missing = _find_missing(@_);
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  _fail_or_skip($missing, $ENV{RELEASE_TESTING})
-    if $missing;
+  __PACKAGE__->_needs(@_);
 }
 
-sub _skip { _fail_or_skip($_[0], 0) }
-sub _fail { _fail_or_skip($_[0], 1) }
+sub _needs {
+  my $class = shift;
+  my $message = $class->_find_missing(@_) or return;
+  local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+  $class->__finish_test($message, $ENV{RELEASE_TESTING});
+}
 
-sub _fail_or_skip {
-  my ($message, $fail) = @_;
+sub _needs_name { "Test::Needs modules" }
+
+sub __finish_test {
+  my ($class, $message, $fail) = @_;
   if ($INC{'Test2/API.pm'}) {
     my $ctx = Test2::API::context();
     my $hub = $ctx->hub;
     if ($fail) {
-      $ctx->ok(0, "Test::Needs modules available", [$message]);
+      $ctx->ok(0, $class->_needs_name . ' available', [$message]);
     }
     else {
       my $plan = $hub->plan;
@@ -149,7 +154,7 @@ sub _fail_or_skip {
       if ($plan || $tests) {
         my $skips
           = $plan && $plan ne 'NO PLAN' ? $plan - $tests : 1;
-        $ctx->skip("Test::Needs modules not available") for 1 .. $skips;
+        $ctx->skip($class->_needs_name . ' not available') for 1 .. $skips;
         $ctx->note($message);
       }
       else {
@@ -167,7 +172,7 @@ sub _fail_or_skip {
     if ($fail) {
       $tb->plan(tests => 1)
         unless $tb->$has_plan;
-      $tb->ok(0, "Test::Needs modules available");
+      $tb->ok(0, $class->_needs_name . ' available');
       $tb->diag($message);
     }
     else {
@@ -176,7 +181,7 @@ sub _fail_or_skip {
       if ($plan || $tests) {
         my $skips
           = $plan && $plan ne 'no_plan' ? $plan - $tests : 1;
-        $tb->skip("Test::Needs modules not available")
+        $tb->skip($class->_needs_name . ' not available')
           for 1 .. $skips;
         Test::Builer->can('note') ? $tb->note($message) : print "# $message\n";
       }
@@ -192,7 +197,7 @@ sub _fail_or_skip {
   else {
     if ($fail) {
       print "1..1\n";
-      print "not ok 1 - Test::Needs modules available\n";
+      print "not ok 1 - ".$class->_needs_name." available\n";
       print STDERR "# $message\n";
       exit 1;
     }
