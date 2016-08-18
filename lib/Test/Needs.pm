@@ -138,7 +138,7 @@ sub _needs {
   $class->__finish_test($message, $ENV{RELEASE_TESTING});
 }
 
-sub _needs_name { "Test::Needs modules" }
+sub _needs_name { "Modules" }
 
 sub __finish_test {
   my ($class, $message, $fail) = @_;
@@ -155,11 +155,13 @@ sub __finish_test {
       if ($plan || $tests) {
         my $skips
           = $plan && $plan ne 'NO PLAN' ? $plan - $tests : 1;
-        $ctx->skip($name) for 1 .. $skips;
-        $ctx->note(($skips ? '' : "$name: ") . $message);
+        $ctx->skip($name)
+          for 1 .. $skips;
+        my $full_message = ($skips ? '' : "$name: ") . $message;
+        $ctx->note($full_message);
       }
       else {
-        $ctx->plan(0, 'SKIP', $message);
+        $ctx->plan(0, 'SKIP', "$name: $message");
       }
     }
     $ctx->done_testing;
@@ -184,10 +186,17 @@ sub __finish_test {
           = $plan && $plan ne 'no_plan' ? $plan - $tests : 1;
         $tb->skip($name)
           for 1 .. $skips;
-        Test::Builer->can('note') ? $tb->note($message) : print "# $message\n";
+        my $full_message = ($skips ? '' : "$name: ") . $message;
+        my $note = Test::Builder->can('note') || sub {
+          my ($c, $m) = @_;
+          $m =~ s/^/# /mg;
+          $m =~ s/\n?\z/\n/;
+          print { $c->output } $m;
+        };
+        $tb->$note($full_message);
       }
       else {
-        $tb->skip_all($message);
+        $tb->skip_all("$name: $message");
       }
     }
     $tb->done_testing
@@ -203,7 +212,7 @@ sub __finish_test {
       exit 1;
     }
     else {
-      print "1..0 # SKIP $message\n";
+      print "1..0 # SKIP $name: $message\n";
     }
   }
   exit 0;
