@@ -125,3 +125,60 @@ sub check {
 sub _needs_name { "Threads" }
 
 1;
+__END__
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Test::Needs::Threads - Skip tests unless threads are available
+
+=head1 SYNOPSIS
+
+  use Test::Needs::Threads;
+
+  # check later
+  use Test::Needs::TestEnv ();
+  Test::Needs::TestEnv::check;
+
+  # skips remainder of subtest
+  use Test::More;
+  use Test::Needs::Threads ();
+  subtest 'my subtest' => sub {
+    Test::Needs::TestEnv::check;
+    ...
+  };
+
+=head1 DESCRIPTION
+
+Skip test scripts if threads are not available and working.
+
+=head1 SUBROUTINES
+
+=head2 check
+
+Checks for threads support just like a C<use>.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Test2::Require::Threads>
+
+Part of the L<Test2> ecosystem.  Only supports running as a C<use> command to
+skip an entire plan.  Does not check thread creation.
+
+=back
+
+=head1 AUTHORS
+
+See L<Test::Needs|Test::Needs/AUTHORS> for authors.
+
+=head1 COPYRIGHT AND LICENSE
+
+See L<Test::Needs|Test::Needs/COPYRIGHT AND LICENSE> for the copyright and
+license.
+
+=cut

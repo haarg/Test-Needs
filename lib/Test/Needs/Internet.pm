@@ -103,3 +103,74 @@ sub _promote_to_failure {
 }
 
 1;
+__END__
+
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Test::Needs::Internet - Skip tests when internet access is not available
+
+=head1 SYNOPSIS
+
+  use Test::Needs::Internet
+    'www.google.com',               # check http
+    'www.google.com:443',           # check https
+    {
+      'www.google.com' => 80,       # specify ports as hashref
+      'www.google.com' => 'https',  # port can be given by name
+    },
+  ;
+
+  # check later
+  use Test::Needs::Internet;
+  test_needs_internet 'www.google.com';
+
+  # skips remainder of subtest
+  use Test::More;
+  use Test::Needs::Internet;
+  subtest 'my subtest' => sub {
+    test_needs_internet 'www.google.com';
+    ...
+  };
+
+=head1 DESCRIPTION
+
+Skip test scripts if the listed host names can't be connected to via TCP.
+Skipping is done in the same manner as L<Test::Needs>.
+
+If C<NO_NETWORK_TESTING> is set, tests will be skipped without testing any sites.
+
+=head1 EXPORTS
+
+=head2 test_needs_internet
+
+Has the same interface as when using Test::Needs::Internet in a C<use>.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Test::Internet>
+
+Checks for access by querying the root DNS servers.  Does not respect
+C<NO_NETWORK_TESTING>.
+
+=item L<Test::RequiresInternet>
+
+Limited to performing a C<skip_all>, and only works with IPv4.
+
+=back
+
+=head1 AUTHORS
+
+See L<Test::Needs|Test::Needs/AUTHORS> for authors.
+
+=head1 COPYRIGHT AND LICENSE
+
+See L<Test::Needs|Test::Needs/COPYRIGHT AND LICENSE> for the copyright and
+license.
+
+=cut
