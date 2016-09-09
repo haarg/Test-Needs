@@ -303,7 +303,7 @@ an entire plan.  Can skip based on subref results.
 
 =back
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 haarg - Graham Knop (cpan:HAARG) <haarg@haarg.org>
 
@@ -311,12 +311,10 @@ haarg - Graham Knop (cpan:HAARG) <haarg@haarg.org>
 
 None so far.
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2016 the Test::Needs L</AUTHOR> and L</CONTRIBUTORS>
+Copyright (c) 2016 the Test::Needs L</AUTHORS> and L</CONTRIBUTORS>
 as listed above.
-
-=head1 LICENSE
 
 This library is free software and may be distributed under the same terms
 as perl itself. See L<http://dev.perl.org/licenses/>.
