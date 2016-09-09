@@ -296,6 +296,11 @@ skip an entire plan.
 Part of the L<Test2> ecosystem.  Only supports running as a C<use> command to
 skip an entire plan.  Checks perl versions.
 
+=item L<Test::If>
+
+Acts as a C<use> statement.  Only supports running as a C<use> command to skip
+an entire plan.  Can skip based on subref results.
+
 =back
 
 =head1 AUTHOR
