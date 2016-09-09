@@ -135,7 +135,11 @@ sub _needs {
   my $class = shift;
   my $message = $class->_find_missing(@_) or return;
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  $class->__finish_test($message, $ENV{RELEASE_TESTING});
+  $class->__finish_test($message, $class->_promote_to_failure);
+}
+
+sub _promote_to_failure {
+  $ENV{RELEASE_TESTING};
 }
 
 sub _needs_name { "Modules" }
