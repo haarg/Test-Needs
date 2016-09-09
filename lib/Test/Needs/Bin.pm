@@ -8,13 +8,25 @@ $VERSION =~ tr/_//d;
 use Test::Needs ();
 our @ISA = qw(Test::Needs);
 
-use File::Which ();
+use File::Spec;
+use ExtUtils::MakeMaker ();
 
 our @EXPORT = qw(test_needs_bin);
 
 sub _find_missing {
   my $class = shift;
-  my @bad = grep !File::Which::which($_), @_;
+  my @bad = grep {
+    my $cmd = $_;
+    !(
+      grep !-d $_ && -x _ || MM->maybe_command($_),
+      (
+        File::Spec->file_name_is_absolute($cmd)
+        || File::Spec->splitdir($cmd) > 1
+      ) ? $cmd
+      : map File::Spec->catfile($_, $cmd),
+        File::Spec->path
+    )
+  } @_;
   @bad ? "Need " . join(', ', @bad) : undef;
 }
 
