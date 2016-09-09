@@ -23,12 +23,15 @@ sub _find_missing {
   my $class = shift;
   my @bad =
     map {
-      my ($type, $env, $check) = @$_;
+      my $type = $_;
+      $type =~ s/^-//;
+      my $env = $types{$type}
+          or Test::Needs::_croak "Invalid test type $type",
       my $val = $ENV{$env};
       $type eq 'interactive' ? do {
         my $reason
           = $val                      ? "$env set"
-          : $ENV{AUTOMATED_TESTING  } ? "AUTOMATED_TESTING set"
+          : $ENV{AUTOMATED_TESTING}   ? "AUTOMATED_TESTING set"
           : $ENV{PERL_MM_USE_DEFAULT} ? "PERL_MM_USE_DEFAULT set"
           : (not -t STDIN && ( -t STDOUT || !( -f STDOUT || -c STDOUT ) ) ) ? "no terminal"
           : undef;
@@ -37,9 +40,6 @@ sub _find_missing {
       : !$val ? "$env not set for $type testing"
       : ()
     }
-    map +(ref ? $_ : [$_, 1]),
-    map +(ref $types{$_} ? [$_, @{$types{$_}}] : [$_, $types{$_}, 1]
-      or Test::Needs::_croak "Invalid test type $_"),
     @_;
   @bad ? join(', ', @bad) : undef;
 }
