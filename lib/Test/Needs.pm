@@ -291,6 +291,11 @@ and broken modules.
 Part of the L<Test2> ecosystem.  Only supports running as a C<use> command to
 skip an entire plan.
 
+=item L<Test2::Require::Perl>
+
+Part of the L<Test2> ecosystem.  Only supports running as a C<use> command to
+skip an entire plan.  Checks perl versions.
+
 =back
 
 =head1 AUTHOR
