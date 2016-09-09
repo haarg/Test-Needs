@@ -98,4 +98,8 @@ sub test_needs_internet {
 
 sub _needs_name { "Internet sites" }
 
+sub _promote_to_failure {
+  !$ENV{NO_NETWORK_TESTING} && $_[0]->SUPER::_promote_to_failure;
+}
+
 1;
