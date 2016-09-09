@@ -35,8 +35,6 @@ use File::Spec;
 use Test::Needs ();
 our @ISA = qw(Test::Needs);
 
-our @EXPORT = qw(test_needs_threads);
-
 my $FILE = File::Spec->rel2abs(__FILE__);
 
 my $_PERL;
@@ -56,10 +54,10 @@ my $_PERL;
   else {
     ($_PERL) =
       map /(.*)/,
-      grep -x,
+      grep !-d && -x,
       map +($_, $^O eq 'MSWin32' ? ("$_.exe") : ()),
       map File::Spec->catfile($_, $_PERL),
-      split /\Q$Config{path_sep}\E/, $ENV{PATH};
+      File::Spec->path;
   }
 }
 
@@ -76,7 +74,7 @@ sub _find_missing {
 
   my $archname = $Config{archname};
   my $version = $Config{version};
-  my @inc_version_list = reverse split / /, $Config{inc_version_list};
+  my @inc_version_list = grep length $_, reverse split / /, $Config{inc_version_list};
   my $path_sep = $Config{path_sep};
 
   my %skip = map +($_ => 1),
@@ -89,7 +87,10 @@ sub _find_missing {
         [$_, $version, $archname],
         [$_, $version],
         [$_, $archname],
-        (@inc_version_list ? [$_, @inc_version_list] : ()),
+        (@inc_version_list ? do {
+          my $d = $_;
+          map [$d, $_], @inc_version_list;
+        } : ()),
       ),
       map +(split /\Q$path_sep/),
       grep !_tainted($_),
@@ -107,8 +108,6 @@ sub _find_missing {
 
   my @perl = ($_PERL, '-T', map "-I$_", grep !$skip{$_}, @INC);
 
-  warn $_ for @perl;
-  exit;
   if (system @perl, $FILE, '--install-check') {
     return "threads.pm not installed";
   }
@@ -118,13 +117,11 @@ sub _find_missing {
   undef;
 }
 
-sub test_needs_threads {
+sub check {
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
   __PACKAGE__->_needs(@_);
 }
 
 sub _needs_name { "Threads" }
-
-1;
 
 1;
