@@ -5,113 +5,64 @@ no warnings 'once';
 our $VERSION = '0.002004';
 $VERSION =~ tr/_//d;
 
-BEGIN {
-  if (!caller && @ARGV) {
-    my ($op) = @ARGV;
-    require POSIX;
-    if ($op eq '--install-check') {
-      eval { require threads } or POSIX::_exit(1);
-    }
-    elsif ($op eq '--create-check') {
-      require threads;
-      require File::Spec;
-      open my $olderr, '>&', \*STDERR
-        or die "can't dup filehandle: $!";
-      open STDERR, '>', File::Spec->devnull
-        or die "can't open null: $!";
-      my $out = threads->create(sub { 1 })->join;
-      open STDERR, '>&', $olderr;
-      POSIX::_exit((defined $out && $out eq '1') ? 0 : 1);
-    }
-    else {
-      die "Invalid option $op!\n";
-    }
-    POSIX::_exit(0);
-  }
-}
-
-use Config;
-use File::Spec;
 use Test::Needs ();
 our @ISA = qw(Test::Needs);
 
-my $FILE = File::Spec->rel2abs(__FILE__);
-
-my $_PERL;
-{
-  ($_PERL) = $^X =~ /(.*)/;
-  (undef, my $dir, my $exe) = File::Spec->splitpath($_PERL);
-  $dir = undef, $_PERL = 'perl'
+my $_perl;
+sub _perl {
+  return $_perl
+    if defined $_perl;
+  require File::Spec;
+  require Config;
+  ($_perl) = $^X =~ /(.*)/;
+  (undef, my $dir, my $exe) = File::Spec->splitpath($_perl);
+  $dir = undef, $_perl = 'perl'
     if $exe !~ /perl/;
-  if (File::Spec->file_name_is_absolute($_PERL)) {
+  if (File::Spec->file_name_is_absolute($_perl)) {
   }
-  elsif (-x $Config{perlpath}) {
-    $_PERL = $Config{perlpath};
+  elsif (-x $Config::Config{perlpath}) {
+    $_perl = $Config::Config{perlpath};
   }
-  elsif ($dir && -x $_PERL) {
-    $_PERL = File::Spec->rel2abs($_PERL);
+  elsif ($dir && -x $_perl) {
+    $_perl = File::Spec->rel2abs($_perl);
   }
   else {
-    ($_PERL) =
+    ($_perl) =
       map /(.*)/,
       grep !-d && -x,
       map +($_, $^O eq 'MSWin32' ? ("$_.exe") : ()),
-      map File::Spec->catfile($_, $_PERL),
+      map File::Spec->catfile($_, $_perl),
       File::Spec->path;
   }
+  return $_perl;
 }
 
-sub _tainted {
-  local ($@, $SIG{__DIE__});
-  return ! eval { eval("#" . substr(join("", @_), 0, 0)); 1 };
+my %checks;
+sub _run_check {
+  my $check = shift;
+  return $checks{$check}
+    if exists $checks{$check};
+
+  require Config;
+
+  my %skip = map +($_ => 1), (
+    @Config::Config{qw(privlibexp archlibexp sitearchexp sitelibexp)}
+  );
+  my @perl = (_perl, '-T', map "-I$_", grep !$skip{$_}, @INC);
+
+  $checks{$check} = !system @perl, '-mTest::Needs::Threads', '-eTest::Needs::Threads::_check_'.$check;
 }
 
 sub _find_missing {
   my $class = shift;
-  if (! $Config{useithreads}) {
+  require Config;
+  if (! $Config::Config{useithreads}) {
     return "your perl does not support ithreads";
   }
-
-  my $archname = $Config{archname};
-  my $version = $Config{version};
-  my @inc_version_list = grep length $_, reverse split / /, $Config{inc_version_list};
-  my $path_sep = $Config{path_sep};
-
-  my %skip = map +($_ => 1),
-    @Config{qw(privlibexp archlibexp sitearchexp sitelibexp)},
-    (
-      map +(
-        $_,
-        grep -d,
-        map File::Spec->catdir(@$_),
-        [$_, $version, $archname],
-        [$_, $version],
-        [$_, $archname],
-        (@inc_version_list ? do {
-          my $d = $_;
-          map [$d, $_], @inc_version_list;
-        } : ()),
-      ),
-      map +(split /\Q$path_sep/),
-      grep !_tainted($_),
-      (
-        exists $ENV{PERL5LIB} ? $ENV{PERL5LIB}
-        : exists $ENV{PERLLIB} ? $ENV{PERLLIB}
-        : ()
-      )
-    );
-
-  my @taintenv = grep _tainted($ENV{$_}), qw(PATH);
-
-  local @ENV{@taintenv};
-  delete @ENV{@taintenv};
-
-  my @perl = ($_PERL, '-T', map "-I$_", grep !$skip{$_}, @INC);
-
-  if (system @perl, $FILE, '--install-check') {
+  elsif (!_run_check('install')) {
     return "threads.pm not installed";
   }
-  elsif (system @perl, $FILE, '--create-check') {
+  elsif (!_run_check('create')) {
     return "threads are broken on this machine";
   }
   undef;
@@ -123,6 +74,24 @@ sub check {
 }
 
 sub _needs_name { "Threads" }
+
+sub _check_install {
+  require POSIX;
+  eval { require threads } or POSIX::_exit(1);
+}
+
+sub _check_create {
+  require POSIX;
+  require threads;
+  require File::Spec;
+  open my $olderr, '>&', \*STDERR
+    or die "can't dup filehandle: $!";
+  open STDERR, '>', File::Spec->devnull
+    or die "can't open null: $!";
+  my $out = threads->create(sub { 1 })->join;
+  open STDERR, '>&', $olderr;
+  POSIX::_exit((defined $out && $out eq '1') ? 0 : 1);
+}
 
 1;
 __END__
@@ -140,14 +109,14 @@ Test::Needs::Threads - Skip tests unless threads are available
   use Test::Needs::Threads;
 
   # check later
-  use Test::Needs::TestEnv ();
-  Test::Needs::TestEnv::check;
+  use Test::Needs::Threads ();
+  Test::Needs::Threads::check;
 
   # skips remainder of subtest
   use Test::More;
   use Test::Needs::Threads ();
   subtest 'my subtest' => sub {
-    Test::Needs::TestEnv::check;
+    Test::Needs::Threads::check;
     ...
   };
 

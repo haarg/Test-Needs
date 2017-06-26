@@ -117,7 +117,7 @@ sub _find_missing {
 sub import {
   my $class = shift;
   my $target = caller;
-  if (@_) {
+  {
     local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
     $class->_needs(@_);
   }
