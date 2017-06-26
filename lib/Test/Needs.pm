@@ -48,6 +48,20 @@ sub _croak {
   die $message;
 }
 
+sub _to_pairs {
+  map +(
+    ref eq 'HASH' ? do {
+      my $arg = $_;
+      map [ $_ => $arg->{$_} ], sort keys %$arg;
+    }
+    : ref eq 'ARRAY' ? do {
+      my $arg = $_;
+      map [ @{$arg}[$_*2,$_*2+1] ], 0 .. int($#$arg / 2);
+    }
+    : [ $_ ]
+  ), @_;
+}
+
 sub _find_missing {
   my $class = shift;
   my @bad = map {
@@ -97,20 +111,7 @@ sub _find_missing {
     else {
       $version ? "$module $version" : $module;
     }
-  }
-  map {
-    if (ref eq 'HASH') {
-      my $arg = $_;
-      map [ $_ => $arg->{$_} ], sort keys %$arg;
-    }
-    elsif (ref eq 'ARRAY') {
-      my $arg = $_;
-      map [ @{$arg}[$_*2,$_*2+1] ], 0 .. int($#$arg / 2);
-    }
-    else {
-      [ $_ => undef ];
-    }
-  } @_;
+  } _to_pairs(@_);
   @bad ? "Need " . join(', ', @bad) : undef;
 }
 
