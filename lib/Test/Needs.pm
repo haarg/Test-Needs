@@ -212,17 +212,20 @@ sub _fail_or_skip {
 
 my $terminate_event;
 sub _t2_terminate_event () {
+  return $terminate_event
+    if $terminate_event;
   local $@;
-  $terminate_event ||= eval q{
-    $INC{'Test/Needs/Event/Terminate.pm'} = $INC{'Test/Needs.pm'};
+  my $file = __FILE__;
+  $terminate_event = eval <<"END_CODE" or die "$@";
     package # hide
       Test::Needs::Event::Terminate;
     use Test2::Event ();
-    our @ISA = qw(Test2::Event);
+    our \@ISA = qw(Test2::Event);
     sub no_display { 1 }
     sub terminate { 0 }
+    \$INC{'Test/Needs/Event/Terminate.pm'} = \$file;
     __PACKAGE__;
-  } or die "$@";
+END_CODE
 }
 
 1;
