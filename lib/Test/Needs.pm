@@ -102,19 +102,7 @@ sub _find_missing {
       $version ? "$module $version" : $module;
     }
   }
-  map {
-    if (ref eq 'HASH') {
-      my $arg = $_;
-      map [ $_ => $arg->{$_} ], sort keys %$arg;
-    }
-    elsif (ref eq 'ARRAY') {
-      my $arg = $_;
-      map [ @{$arg}[$_*2,$_*2+1] ], 0 .. int($#$arg / 2);
-    }
-    else {
-      [ $_ => undef ];
-    }
-  } @_;
+  _pairs(@_);
   @bad ? "Need " . join(', ', @bad) : undef;
 }
 
@@ -139,6 +127,20 @@ sub test_needs {
 
 sub _skip { _fail_or_skip($_[0], 0) }
 sub _fail { _fail_or_skip($_[0], 1) }
+
+sub _pairs {
+  map +(
+    ref eq 'HASH' ? do {
+      my $arg = $_;
+      map [ $_ => $arg->{$_} ], sort keys %$arg;
+    }
+    : ref eq 'ARRAY' ? do {
+      my $arg = $_;
+      map [ @{$arg}[$_*2,$_*2+1] ], 0 .. int($#$arg / 2);
+    }
+    : [ $_ ]
+  ), @_;
+}
 
 sub _fail_or_skip {
   my ($message, $fail) = @_;
