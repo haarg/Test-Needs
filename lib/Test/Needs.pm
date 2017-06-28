@@ -140,7 +140,7 @@ sub _needs {
   my $class = shift;
   my $message = $class->_find_missing(@_) or return;
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  $class->__finish_test($message, $class->_promote_to_failure);
+  _finish_test($class->_needs_name, $message, $class->_promote_to_failure);
 }
 
 sub _promote_to_failure {
@@ -149,9 +149,9 @@ sub _promote_to_failure {
 
 sub _needs_name { "Modules" }
 
-sub __finish_test {
-  my ($class, $message, $fail) = @_;
-  my $name = $class->_needs_name . ($fail ? '' : ' not') . ' available';
+sub _finish_test {
+  my ($type, $message, $fail) = @_;
+  my $name = $type . ' not available';
   if ($INC{'Test2/API.pm'}) {
     my $ctx = Test2::API::context();
     my $hub = $ctx->hub;
