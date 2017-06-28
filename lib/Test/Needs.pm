@@ -48,32 +48,37 @@ sub _croak {
   die $message;
 }
 
+sub _numify_version {
+  my $version = shift;
+  return
+      !$version ? 0
+    : $version =~ /^[0-9]+\.[0-9]+$/ ? sprintf('%.6f', $version)
+    : $version =~ /^v?([0-9]+(?:\.[0-9]+)+)$/ ? do {
+      my @p = split /\./, $1;
+      push @p, 0
+        until @p >= 3;
+      sprintf '%d.%03d%03d', @p;
+    }
+    : $version =~ /^\x05..?$/s ? do {
+      my @p = map ord, split //, $version;
+      push @p, 0
+        until @p >= 3;
+      sprintf '%d.%03d%03d', @p;
+    }
+    : do {
+      use warnings FATAL => 'numeric';
+      no warnings 'void';
+      eval { 0 + $version; 1 } ? $version
+        : _croak sprintf qq{version "%s" does not look like a number},
+          $version;
+    };
+}
+
 sub _find_missing {
   my @bad = map {
     my ($module, $version) = @$_;
     if ($module eq 'perl') {
-      $version
-        = !$version ? 0
-        : $version =~ /^[0-9]+\.[0-9]+$/ ? sprintf('%.6f', $version)
-        : $version =~ /^v?([0-9]+(?:\.[0-9]+)+)$/ ? do {
-          my @p = split /\./, $1;
-          push @p, 0
-            until @p >= 3;
-          sprintf '%d.%03d%03d', @p;
-        }
-        : $version =~ /^\x05..?$/s ? do {
-          my @p = map ord, split //, $version;
-          push @p, 0
-            until @p >= 3;
-          sprintf '%d.%03d%03d', @p;
-        }
-        : do {
-          use warnings FATAL => 'numeric';
-          no warnings 'void';
-          eval { 0 + $version; 1 } ? $version
-            : _croak sprintf qq{version "%s" for perl does not look like a number},
-              $version;
-        };
+      $version = _numify_version($version);
       if ("$]" < $version) {
         sprintf "perl %s (have %.6f)", $version, $];
       }
