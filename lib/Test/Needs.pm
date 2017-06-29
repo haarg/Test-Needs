@@ -55,29 +55,16 @@ sub _try_version {
 }
 
 sub _numify_version {
-  my $version = shift;
-  return
-      !$version ? 0
-    : $version =~ /^[0-9]+\.[0-9]+$/ ? sprintf('%.6f', $version)
-    : $version =~ /^v?([0-9]+(?:\.[0-9]+)+)$/ ? do {
-      my @p = split /\./, $1;
-      push @p, 0
-        until @p >= 3;
-      sprintf '%d.%03d%03d', @p;
-    }
-    : $version =~ /^\x05..?$/s ? do {
-      my @p = map ord, split //, $version;
-      push @p, 0
-        until @p >= 3;
-      sprintf '%d.%03d%03d', @p;
-    }
-    : do {
-      use warnings FATAL => 'numeric';
-      no warnings 'void';
-      eval { 0 + $version; 1 } ? $version
-        : _croak sprintf qq{version "%s" does not look like a number},
-          $version;
-    };
+  for ($_[0]) {
+    return
+        !$_ ? 0
+      : /^[0-9]+\.[0-9]+$/ ? sprintf('%.6f', $_)
+      : /^v?([0-9]+(?:\.[0-9]+)+)$/
+        ? sprintf('%d.%03d%03d', ((split /\./, $1), 0, 0)[0..2])
+      : /^(\x05)(.*)$/s
+        ? sprintf('%d.%03d%03d', map ord, $1, split //, $2)
+      : _croak qq{version "$_" does not look like a number};
+  }
 }
 
 sub _find_missing {
