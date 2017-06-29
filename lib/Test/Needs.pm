@@ -136,6 +136,7 @@ sub _pairs {
 sub _finish_test {
   my ($type, $message, $fail) = @_;
   my $name = $type . ' not available';
+  my $full_message = "$name: $message";
   if ($INC{'Test2/API.pm'}) {
     my $ctx = Test2::API::context();
     my $hub = $ctx->hub;
@@ -150,11 +151,10 @@ sub _finish_test {
           = $plan && $plan ne 'NO PLAN' ? $plan - $tests : 1;
         $ctx->skip($name)
           for 1 .. $skips;
-        my $full_message = ($skips ? '' : "$name: ") . $message;
-        $ctx->note($full_message);
+        $ctx->note($skips ? $message : $full_message);
       }
       else {
-        $ctx->plan(0, 'SKIP', "$name: $message");
+        $ctx->plan(0, 'SKIP', $full_message);
       }
     }
     $ctx->done_testing;
@@ -163,8 +163,10 @@ sub _finish_test {
   }
   elsif ($INC{'Test/Builder.pm'}) {
     my $tb = Test::Builder->new;
-    my $has_plan = Test::Builder->can('has_plan') ? 'has_plan'
-      : sub { $_[0]->expected_tests || eval { $_[0]->current_test($_[0]->current_test); 'no_plan' } };
+    my $has_plan = Test::Builder->can('has_plan') ? 'has_plan' : sub {
+      $_[0]->expected_tests
+        || eval { $_[0]->current_test($_[0]->current_test); 'no_plan' }
+    };
     if ($fail) {
       $tb->plan(tests => 1)
         unless $tb->$has_plan;
@@ -179,17 +181,16 @@ sub _finish_test {
           = $plan && $plan ne 'no_plan' ? $plan - $tests : 1;
         $tb->skip($name)
           for 1 .. $skips;
-        my $full_message = ($skips ? '' : "$name: ") . $message;
-        my $note = Test::Builder->can('note') || sub {
+        my $note = Test::Builder->can('note') ? 'note' : sub {
           my ($c, $m) = @_;
           $m =~ s/^/# /mg;
           $m =~ s/\n?\z/\n/;
           print { $c->output } $m;
         };
-        $tb->$note($full_message);
+        $tb->$note($skips ? $message : $full_message);
       }
       else {
-        $tb->skip_all("$name: $message");
+        $tb->skip_all($full_message);
       }
     }
     $tb->done_testing
@@ -205,7 +206,7 @@ sub _finish_test {
       exit 1;
     }
     else {
-      print "1..0 # SKIP $name: $message\n";
+      print "1..0 # SKIP $full_message\n";
     }
   }
   exit 0;
