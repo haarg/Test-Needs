@@ -48,6 +48,12 @@ sub _croak {
   die $message;
 }
 
+sub _try_version {
+  my ($module, $version) = @_;
+  local $@;
+  !!eval { $module->VERSION($version); 1 };
+}
+
 sub _numify_version {
   my $version = shift;
   return
@@ -78,30 +84,19 @@ sub _find_missing {
   my $class = shift;
   my @bad = map {
     my ($module, $version) = @$_;
-    if ($module eq 'perl') {
+    $module eq 'perl' ? do {
       $version = _numify_version($version);
-      if ("$]" < $version) {
-        sprintf "perl %s (have %.6f)", $version, $];
-      }
-      else {
-        ();
-      }
+      "$]" < $version ? (sprintf "perl %s (have %.6f)", $version, $]) : ()
     }
-    elsif ($module =~ /^\d|[^\w:]|:::|[^:]:[^:]|^:|:$/) {
-      _croak sprintf qq{"%s" does not look like a module name}, $module;
-    }
-    elsif (_try_require($module)) {
-      local $@;
-      if (defined $version && !eval { $module->VERSION($version); 1 }) {
-        "$module $version (have ".$module->VERSION.')';
-      }
-      else {
-        ();
-      }
-    }
-    else {
-      $version ? "$module $version" : $module;
-    }
+    : $module =~ /^\d|[^\w:]|:::|[^:]:[^:]|^:|:$/
+      ? _croak sprintf qq{"%s" does not look like a module name}, $module
+    : _try_require($module) ? (
+      defined $version && !_try_version($module, $version)
+        ? "$module $version (have ".(defined $module->VERSION ? $module->VERSION : 'undef').')'
+        : ()
+    )
+    : $version ? "$module $version"
+    : $module;
   }
   _pairs(@_);
   @bad ? "Need " . join(', ', @bad) : undef;
