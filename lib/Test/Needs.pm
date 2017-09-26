@@ -16,6 +16,11 @@ BEGIN {
 
 our @EXPORT = qw(test_needs);
 
+our @ISA = qw(Test::Needs::Base);
+
+sub _croak;
+*_croak = \&Test::Needs::Util::_croak;
+
 sub _try_require {
   local %^H
     if _WORK_AROUND_HINT_LEAKAGE;
@@ -37,17 +42,6 @@ sub _try_require {
   !0;
 }
 
-sub _croak {
-  my $message = join '', @_;
-  my $i = 1;
-  while (my ($p, $f, $l) = caller($i++)) {
-    next
-      if $p->isa(__PACKAGE__);
-    die "$message at $f line $l.\n";
-  }
-  die $message;
-}
-
 sub _try_version {
   my ($module, $version) = @_;
   local $@;
@@ -67,13 +61,23 @@ sub _numify_version {
   }
 }
 
+sub _stringify_version {
+  my $version = shift;
+  my @parts = $version =~ /^([0-9]+)(?:\.([0-9]{1,3})+)?/;
+  $_ = int(substr($_."00",0,3))
+    for @parts[1..$#parts];
+  push @parts, 0
+    while @parts < 3;
+  join '.', @parts;
+}
+
 sub _find_missing {
   my $class = shift;
   map {
     my ($module, $version) = @$_;
     $module eq 'perl' ? do {
       $version = _numify_version($version);
-      "$]" < $version ? (sprintf "perl %s (have %.6f)", $version, $]) : ()
+      "$]" < $version ? (sprintf "perl %s (have %s)", map _stringify_version($_), $version, $]) : ()
     }
     : $module =~ /^\d|[^\w:]|:::|[^:]:[^:]|^:|:$/
       ? _croak sprintf qq{"%s" does not look like a module name}, $module
@@ -85,10 +89,24 @@ sub _find_missing {
     : $version ? "$module $version"
     : $module;
   }
-  _pairs(@_);
+  Test::Needs::Util::_pairs(@_);
 }
 
+sub _name { 'Modules' . ($_[1] ? '' : ' not'). ' available' }
 sub _missing_format { 'Need %s' }
+
+sub test_needs {
+  local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+  __PACKAGE__->_needs(@_);
+}
+
+package
+  Test::Needs::Base;
+
+sub _name;
+
+sub _promote_to_failure { $ENV{RELEASE_TESTING} }
+sub _missing_format { '%s' }
 
 sub import {
   my $class = shift;
@@ -102,24 +120,17 @@ sub import {
     for @{"${class}::EXPORT"};
 }
 
-sub test_needs {
-  local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  __PACKAGE__->_needs(@_);
-}
-
 sub _needs {
   my $class = shift;
   my @missing = $class->_find_missing(@_) or return;
   my $message = sprintf $class->_missing_format, join(', ', @missing);
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  _finish_test($class->_needs_name, $message, $class->_promote_to_failure);
+  my $fail = $class->_promote_to_failure;
+  Test::Needs::Util::_finish_test($class->_name($fail), $message, $fail);
 }
 
-sub _promote_to_failure {
-  $ENV{RELEASE_TESTING};
-}
-
-sub _needs_name { "Modules" }
+package
+  Test::Needs::Util;
 
 sub _pairs {
   map +(
@@ -135,12 +146,37 @@ sub _pairs {
   ), @_;
 }
 
+sub _croak {
+  my $message = join '', @_;
+  my $i = 1;
+  while (my ($p, $f, $l) = caller($i++)) {
+    next
+      if $p =~ /\ATest::Needs(?:\z|::)/;
+    die "$message at $f line $l.\n";
+  }
+  die $message;
+}
+
+sub _create_needs_sub {
+  my $sub = shift;
+  my $caller = caller;
+  no strict 'refs';
+  *{$caller.'::'.$sub} = sub {
+    local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+    $caller->_needs(@_);
+  };
+}
+
 sub _finish_test {
-  my ($type, $message, $fail) = @_;
-  my $name = $type . ' not available';
+  my ($name, $message, $fail) = @_;
   my $full_message = "$name: $message";
   if ($INC{'Test2/API.pm'}) {
-    my $ctx = Test2::API::context();
+    my $level = -1;
+    while (my $c = caller(++$level) or $level = 0) {
+      last
+        if $c !~ /\ATest::Needs(?:::|\z)/;
+    }
+    my $ctx = Test2::API::context(level => $level);
     my $hub = $ctx->hub;
     if ($fail) {
       $ctx->ok(0, $name, [$message]);
