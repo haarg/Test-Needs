@@ -69,7 +69,7 @@ sub _numify_version {
 
 sub _find_missing {
   my $class = shift;
-  my @bad = map {
+  map {
     my ($module, $version) = @$_;
     $module eq 'perl' ? do {
       $version = _numify_version($version);
@@ -86,8 +86,9 @@ sub _find_missing {
     : $module;
   }
   _pairs(@_);
-  @bad ? "Need " . join(', ', @bad) : undef;
 }
+
+sub _missing_format { 'Need %s' }
 
 sub import {
   my $class = shift;
@@ -108,7 +109,8 @@ sub test_needs {
 
 sub _needs {
   my $class = shift;
-  my $message = $class->_find_missing(@_) or return;
+  my @missing = $class->_find_missing(@_) or return;
+  my $message = sprintf $class->_missing_format, join(', ', @missing);
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
   _finish_test($class->_needs_name, $message, $class->_promote_to_failure);
 }
