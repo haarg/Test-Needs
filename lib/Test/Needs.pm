@@ -103,8 +103,15 @@ sub import {
 sub test_needs {
   my $missing = _find_missing(@_);
   local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
-  _fail_or_skip($missing, $ENV{RELEASE_TESTING})
-    if $missing;
+  if ($missing) {
+    if ($ENV{RELEASE_TESTING}) {
+      _fail("$missing due to RELEASE_TESTING");
+    }
+    else {
+      _skip($missing);
+    }
+  }
+
 }
 
 sub _skip { _fail_or_skip($_[0], 0) }
