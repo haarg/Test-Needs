@@ -10,27 +10,32 @@ our @ISA = qw(Test::Needs);
 
 our @EXPORT = qw(test_needs_env);
 
+sub _to_pairs;
+*_to_pairs = \&Test::Needs::_to_pairs;
+
 sub _find_missing {
   my $class = shift;
   my @bad =
     map {
       my ($env, $check) = @$_;
-        !exists $ENV{$env} ? "$env not set"
-      : !defined $check ? ()
+      @_ == 2 && !defined $check ? (
+        exists $ENV{$env} ? "$env is set" : ()
+      )
+      : !exists $ENV{$env} ? "$env not set"
+      : !defined $check ? "$env is set"
       : !ref $check ? (
         $ENV{$env} ne $check ? "$env not set to $check" : ()
       )
-      : (
-        $ENV{$env} !~ $check ? "$env doesn't match $check" : ()
-      );
-    }
-    map {
-      my $e = $_;
-      !ref $e ? [$e]
-      : ref $e eq 'HASH'  ? (map [ $_ => $e->{$_} ], sort keys %$e)
-      : ref $e eq 'ARRAY' ? (map [ $e->[$_*2] => $e->[$_*2+1] ], 0 .. @$_ / 2 )
-      : Test::Needs::_croak "Invalid environment spec ".ref $e;
-    } @_;
+      : eval { $check = \&$check; 1 } ? (
+        eval { $check->($ENV{$env}) } ? () : do {
+          my $e = $@ || "$env failed check";
+          $e =~ s/\n\z//;
+          $e;
+        }
+      )
+      : $ENV{$env} !~ $check ? "$env doesn't match $check"
+      : ();
+    } _to_pairs(@_);
   @bad ? join(', ', @bad) : undef;
 }
 

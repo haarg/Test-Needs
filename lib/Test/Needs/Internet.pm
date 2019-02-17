@@ -44,20 +44,25 @@ our @EXPORT = qw(test_needs_internet);
 
 sub _croak;
 *_croak = \&Test::Needs::_croak;
+sub _to_pairs;
+*_to_pairs = \&Test::Needs::_to_pairs;
 
 sub _find_missing {
   my $class = shift;
-  return "NO_NETWORK_TESTING set" if $ENV{NO_NETWORK_TESTING};
-  my @bad = map {
-    my ($host, $port) = @$_;
-    eval { _assert_socket($host, $port) } ? () : do {
-      my $e = $@;
-      $e =~ s/\n\z//;
-      "$host:$port ($e)";
-    };
-  } (@_ == 1 && ref $_[0] eq 'HASH')
-    ? (map [$_ => $_[0]{$_}], sort keys %{$_[0]})
-    : map [ $_ =~ /:/ ? split /:/, $_ : $_ => 80 ], @_;
+  return "NO_NETWORK_TESTING set"
+    if $ENV{NO_NETWORK_TESTING};
+  my @bad =
+    map {
+      my ($host, $port) = @$_;
+      eval { _assert_socket($host, $port) } ? () : do {
+        my $e = $@;
+        $e =~ s/\n\z//;
+        "$host:$port ($e)";
+      };
+    }
+    map +(
+      @$_ == 1 ? [ $_->[0] =~ /(.*):(.*)/ ? ($1, $2) : ($_->[0], 80) ] : $_
+    ), _to_pairs(@_);
   @bad ? "Can't connect to " . join(', ', @bad) : undef;
 }
 
