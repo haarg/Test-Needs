@@ -204,17 +204,19 @@ sub _t2_terminate_event () {
   return $terminate_event
     if $terminate_event;
   local $@;
-  my $file = __FILE__;
-  $terminate_event = eval <<"END_CODE" or die "$@";
+  $terminate_event = eval sprintf <<'END_CODE', __LINE__+2, __FILE__ or die "$@";
+#line %d "%s"
     package # hide
       Test::Needs::Event::Terminate;
     use Test2::Event ();
-    our \@ISA = qw(Test2::Event);
+    our @ISA = qw(Test2::Event);
     sub no_display { 1 }
     sub terminate { 0 }
-    \$INC{'Test/Needs/Event/Terminate.pm'} = \$file;
     __PACKAGE__;
 END_CODE
+    (my $pm = "$terminate_event.pm") =~ s{::}{/}g;
+    $INC{$pm} = __FILE__;
+    $terminate_event;
 }
 
 1;
