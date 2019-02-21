@@ -42,7 +42,7 @@ sub _croak {
   my $i = 1;
   while (my ($p, $f, $l) = caller($i++)) {
     next
-      if $p->isa(__PACKAGE__);
+      if $p =~ /\ATest::Needs(?:::|\z)/;
     die "$message at $f line $l.\n";
   }
   die $message;
