@@ -1,5 +1,8 @@
 Revision history for Test::Needs
 
+  - fix tests when @INC includes directories that shouldn't have their
+    archname or version subdirectories added.
+
 0.002006 - 2019-04-04
   - added additional references to related modules in pod
   - various internal cleanups
