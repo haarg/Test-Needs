@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002_007 - 2019-07-09
   - fix tests when @INC includes directories that shouldn't have their
     archname or version subdirectories added.
 
