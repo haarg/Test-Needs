@@ -29,9 +29,8 @@ my @perl = $^X =~ /(.*)/s;
 
 my %inc;
 {
-  open my $fh, '-|', @perl, '-le', 'print for @INC'
-    or die "$!";
-  my @inc = <$fh>;
+  my $cmd = join ' ', map qq{"$_"}, @perl, '-le', 'print for @INC';
+  my @inc = `$cmd`;
   chomp @inc;
   @inc{@inc} = ();
 }
