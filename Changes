@@ -1,5 +1,6 @@
 Revision history for Test::Needs
 
+0.002_008 - 2019-07-12
   - fix test compatibility with Windows.
 
 0.002_007 - 2019-07-09
