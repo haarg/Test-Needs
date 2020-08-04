@@ -58,11 +58,11 @@ sub _numify_version {
   for ($_[0]) {
     return
         !$_ ? 0
-      : /^[0-9]+\.[0-9]+$/ ? sprintf('%.6f', $_)
-      : /^v?([0-9]+(?:\.[0-9]+)+)$/
+      : /^[0-9]+(?:\.[0-9]+)?$/ ? sprintf('%.6f', $_)
+      : /^v?([0-9]+(?:\.[0-9]+)*)$/
         ? sprintf('%d.%03d%03d', ((split /\./, $1), 0, 0)[0..2])
       : /^(\x05)(.*)$/s
-        ? sprintf('%d.%03d%03d', map ord, $1, split //, $2)
+        ? sprintf('%d.%03d%03d', ((map ord, "$1", (split //, "$2")), 0, 0)[0..2])
       : _croak qq{version "$_" does not look like a number};
   }
 }
