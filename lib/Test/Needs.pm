@@ -12,6 +12,12 @@ BEGIN {
   *_WORK_AROUND_BROKEN_MODULE_STATE
     = "$]" < 5.009
     ? sub(){1} : sub(){0};
+
+  # this allows regexes to match wide characters in vstrings
+  if ("$]" >= 5.006001 && "$]" <= 5.006002) {
+    require utf8;
+    utf8->import;
+  }
 }
 
 our @EXPORT = qw(test_needs);
@@ -62,7 +68,7 @@ sub _numify_version {
       : /^v?([0-9]+(?:\.[0-9]+)*)$/
         ? sprintf('%d.%03d%03d', ((split /\./, $1), 0, 0)[0..2])
       : /^([\x05-\x07])(.*)$/s
-        ? sprintf('%d.%03d%03d', ((map ord, "$1", (split //, "$2")), 0, 0)[0..2])
+        ? sprintf('%d.%03d%03d', ((map ord, /(.)/g), 0, 0)[0..2])
       : _croak qq{version "$_" does not look like a number};
   }
 }

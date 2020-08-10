@@ -51,10 +51,13 @@ local $SIG{__WARN__} = sub { push @warnings, @_; warn @_ };
 
 for (@try) {
   my ($in, $want) = @$_;
-  my $evaled = eval $in;
-  die $@ if $@;
-  my $got = Test::Needs::_numify_version($evaled);
-  is $got, $want, sprintf "%10s parses correctly as %s", $in, $want;
+  SKIP: {
+    my $evaled = eval $in;
+    skip "$in is unsupported syntax on perl $]", 1
+      if $@;
+    my $got = Test::Needs::_numify_version($evaled);
+    is $got, $want, sprintf "%10s parses correctly as %s", $in, $want;
+  }
 }
 
 is scalar @warnings, 0, "no warnings";
