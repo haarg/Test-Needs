@@ -68,7 +68,7 @@ sub _numify_version {
       : /^v?([0-9]+(?:\.[0-9]+)*)$/
         ? sprintf('%d.%03d%03d', ((split /\./, $1), 0, 0)[0..2])
       : /^([\x05-\x07])(.*)$/s
-        ? sprintf('%d.%03d%03d', ((map ord, /(.)/g), 0, 0)[0..2])
+        ? sprintf('%d.%03d%03d', ((map ord, /(.)/gs), 0, 0)[0..2])
       : _croak qq{version "$_" does not look like a number};
   }
 }
