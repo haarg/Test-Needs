@@ -22,6 +22,8 @@ BEGIN {
 
 our @EXPORT = qw(test_needs);
 
+our $Level = 0;
+
 sub _try_require {
   local %^H
     if _WORK_AROUND_HINT_LEAKAGE;
@@ -98,7 +100,7 @@ sub import {
   my $class = shift;
   my $target = caller;
   if (@_) {
-    local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+    local $Level = $Level + 1;
     test_needs(@_);
   }
   no strict 'refs';
@@ -108,7 +110,7 @@ sub import {
 
 sub test_needs {
   my $missing = _find_missing(@_);
-  local $Test::Builder::Level = ($Test::Builder::Level||0) + 1;
+  local $Level = $Level + 1;
   if ($missing) {
     if ($ENV{RELEASE_TESTING}) {
       _fail("$missing due to RELEASE_TESTING");
@@ -140,7 +142,7 @@ sub _pairs {
 sub _fail_or_skip {
   my ($message, $fail) = @_;
   if ($INC{'Test2/API.pm'}) {
-    my $ctx = Test2::API::context();
+    my $ctx = Test2::API::context(level => $Level);
     my $hub = $ctx->hub;
     if ($fail) {
       $ctx->ok(0, "Test::Needs modules available", [$message]);
@@ -163,6 +165,7 @@ sub _fail_or_skip {
     $ctx->send_event('+'._t2_terminate_event());
   }
   elsif ($INC{'Test/Builder.pm'}) {
+    local $Test::Builder::Level = $Test::Builder::Level + $Level;
     my $tb = Test::Builder->new;
     my $has_plan = Test::Builder->can('has_plan') ? 'has_plan'
       : sub { $_[0]->expected_tests || eval { $_[0]->current_test($_[0]->current_test); 'no_plan' } };
