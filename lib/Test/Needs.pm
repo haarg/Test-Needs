@@ -122,8 +122,14 @@ sub test_needs {
 
 }
 
-sub _skip { _fail_or_skip($_[0], 0) }
-sub _fail { _fail_or_skip($_[0], 1) }
+sub _skip {
+  local $Level = $Level + 1;
+  _fail_or_skip($_[0], 0)
+}
+sub _fail {
+  local $Level = $Level + 1;
+  _fail_or_skip($_[0], 1)
+}
 
 sub _pairs {
   map +(
