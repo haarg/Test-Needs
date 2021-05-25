@@ -119,7 +119,7 @@ sub test_needs {
       _skip($missing);
     }
   }
-
+  return 1;
 }
 
 sub _skip {
