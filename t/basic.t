@@ -60,6 +60,7 @@ sub capture {
   close $stdout;
   waitpid $pid, 0;
   my $exit = $?;
+  $out =~ s{^Possible precedence issue with control flow operator at .*Test/Builder\.pm.*\n}{};
   return wantarray ? ($exit, $out) : $exit;
 }
 
