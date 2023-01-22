@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 17*3 + 31*2;
+use Test::More tests => ( (7*3 + 1*4) * 3 + ( 14*3 + 1*4 )*2 );
 use IPC::Open3;
 use Config ();
 
@@ -73,7 +73,7 @@ for my $api (
     my ($label, @load) = @$api;
     my @using = map {
       my ($e, $o) = capture @perl, "-m$_", "-eprint+$_->VERSION";
-      skip "$label not available", 17+31
+      skip "$label not available", 21*3 + 2*4
         if $e;
       "$_ $o";
     } @load;
@@ -96,8 +96,16 @@ for my $api (
       $unmatch = !defined $unmatch  ? [] : ref $unmatch eq 'ARRAY'  ? $unmatch  : [$unmatch];
       if (!is $exit == 0, !$want_exit, "$name - exit status") {
         ok 0, $name
-          for 0 .. $#$match, 0 .. $#$unmatch;
+          for 1, 0 .. $#$match, 0 .. $#$unmatch;
         diag "Exit status $exit\nOutput:\n$out";
+        return;
+      }
+
+      my $plan_count = () = $out =~ /^[0-9]+\.\.[0-9]+(?: |$)/mg;
+      if (!ok $plan_count <= 1, "$name - no excess plans") {
+        ok 0, $name
+          for 0 .. $#$match, 0 .. $#$unmatch;
+        diag "Output:\n$out";
         return;
       }
 
@@ -168,7 +176,7 @@ for my $api (
       'Missing module skips with no_plan',
     );
     SKIP: {
-      skip 'Test::More too old to run tests without plan', 2
+      skip 'Test::More too old to run tests without plan', 3
         if !Test::More->can('done_testing');
       $check->(
         [$missing, '--tests'],
@@ -188,7 +196,7 @@ for my $api (
     );
 
     SKIP: {
-      skip 'Test::More too old to run subtests', 21
+      skip 'Test::More too old to run subtests', 9*3 + 1*4
         if !Test::More->can('subtest');
 
       $check->(
