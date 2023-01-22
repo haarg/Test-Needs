@@ -92,20 +92,20 @@ for my $api (
         $unmatch = $match->{unmatch};
         $match = $match->{match};
       }
-      $match = !defined $match ? [] : ref $match eq 'ARRAY' ? $match : [$match];
-      $unmatch = !defined $unmatch ? [] : ref $unmatch eq 'ARRAY' ? $unmatch : [$unmatch];
+      $match   = !defined $match    ? [] : ref $match eq 'ARRAY'    ? $match    : [$match];
+      $unmatch = !defined $unmatch  ? [] : ref $unmatch eq 'ARRAY'  ? $unmatch  : [$unmatch];
       if (!is $exit == 0, !$want_exit, "$name - exit status") {
         ok 0, $name
           for 0 .. $#$match, 0 .. $#$unmatch;
         diag "Exit status $exit\nOutput:\n$out";
+        return;
       }
-      else {
-        for my $m (@$match) {
-          like $out, $m, $name;
-        }
-        for my $um (@$unmatch) {
-          unlike $out, $um, $name;
-        }
+
+      for my $m (@$match) {
+        like $out, $m, $name;
+      }
+      for my $um (@$unmatch) {
+        unlike $out, $um, $name;
       }
     };
 
